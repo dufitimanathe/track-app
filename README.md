@@ -20,6 +20,32 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) — redirects to `/admin`.
 
+## Netlify deployment
+
+The frontend repository includes `netlify.toml` with the build command,
+publish directory, and a secret-scanning exception for three public browser
+variables. Next.js embeds these values in its JavaScript bundles by design:
+
+- `NEXT_PUBLIC_API_URL`: the deployed backend URL, including `/api/v1`.
+- `NEXT_PUBLIC_WS_URL`: the deployed Socket.IO endpoint, including `/realtime`.
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`: the Google Maps browser key.
+
+Set these values in Netlify's environment variables for the build context.
+Use the deployed backend's HTTPS URLs instead of the localhost development
+defaults. Restrict the Maps browser key to the frontend's allowed website
+referrers and required Google Maps APIs in Google Cloud.
+
+`SECRETS_SCAN_OMIT_KEYS` excludes only these three intentionally public values;
+secret scanning remains enabled for other variables. Do not put server secrets
+in `NEXT_PUBLIC_*` variables or add them to this exception.
+
+Push this configuration and trigger a new deploy. Changes to `NEXT_PUBLIC_*`
+values also require a new build because they are embedded at build time.
+
+References: [Netlify secret-scanning configuration](https://docs.netlify.com/build/environment-variables/secrets-controller/#configure-secret-scanning),
+[Next.js public environment variables](https://nextjs.org/docs/app/guides/environment-variables#bundling-environment-variables-for-the-browser),
+and [Google Maps key restrictions](https://developers.google.com/maps/api-security-best-practices).
+
 ## Current status
 
 **UI-first phase** with realistic mock data (Virunga Transport Ltd, Kigali locations, RWF pricing).

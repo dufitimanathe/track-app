@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Next.js embeds these browser-facing values in the client bundle.
+  # The Maps key must have website and API restrictions in Google Cloud.
+  # Keep secret scanning enabled for all other environment variables.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_API_URL,NEXT_PUBLIC_WS_URL,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"
