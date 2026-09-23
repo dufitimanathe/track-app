@@ -5,13 +5,17 @@ import { Card } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { TrackingSettingsCard } from "@/components/settings/tracking-settings-card";
-import { company } from "@/data/mock";
+import { companyInitials } from "@/lib/api/auth";
+import { fetchCompany, updateCompany, type CompanyDto } from "@/lib/api/resources";
 import {
   fetchIntegrationsHealth,
   type IntegrationHealth,
 } from "@/lib/api/integrations";
 import { calculateFare, cn, formatRwf } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "react";
+import { normalizeRwandaPhone } from "@/lib/validation/rwanda";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { setCompanyProfile } from "@/store/slices/auth-slice";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 const SECTIONS = [
   { id: "company", label: "Company Profile" },
@@ -27,15 +31,92 @@ const SECTIONS = [
 ] as const;
 
 export default function SettingsPage() {
-  const [section, setSection] = useState<(typeof SECTIONS)[number]["id"]>("company");
-  const [profile, setProfile] = useState({
+  const companyId = useAppSelector((s) => s.auth.companyId);
+  return <CompanySettings key={companyId} companyId={companyId} />;
+}
+
+function profileFromCompany(company: CompanyDto) {
+  return {
     name: company.name,
-    phone: company.phone,
-    email: company.email,
-    address: company.address,
-    timezone: company.timezone,
-    currency: company.currency,
-  });
+    phone: (company.phone ?? "").replace(
+      /^(\+250)(\d{3})(\d{3})(\d{3})$/,
+      "$1 $2 $3 $4",
+    ),
+    email: company.email ?? "",
+    address: company.address ?? "",
+    timezone: company.timezone ?? "Africa/Kigali",
+    currency: company.currency ?? "RWF",
+  };
+}
+
+function CompanySettings({ companyId }: { companyId: string }) {
+  const dispatch = useAppDispatch();
+  const [section, setSection] = useState<(typeof SECTIONS)[number]["id"]>("company");
+  const [profile, setProfile] = useState(() => profileFromCompany({ id: companyId, name: "" }));
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!companyId) return;
+    let cancelled = false;
+    void fetchCompany(companyId)
+      .then((company) => {
+        if (cancelled) return;
+        setProfile(profileFromCompany(company));
+        setProfileLoaded(true);
+        setProfileError(null);
+        dispatch(setCompanyProfile({
+          companyId,
+          name: company.name,
+          initials: companyInitials(company.name),
+        }));
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setProfileError(error instanceof Error ? error.message : "Unable to load company profile.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId, dispatch, loadAttempt]);
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!companyId || !profileLoaded || profileSaving) return;
+    setProfileError(null);
+    setProfileMessage(null);
+    const phone = profile.phone.trim() ? normalizeRwandaPhone(profile.phone) : "";
+    if (phone === null) {
+      setProfileError("Enter a valid Rwanda mobile number, such as +250 782 027 429.");
+      return;
+    }
+    setProfileSaving(true);
+    try {
+      const company = await updateCompany(companyId, {
+        name: profile.name.trim(),
+        phone,
+        email: profile.email.trim() || null,
+        address: profile.address.trim(),
+        timezone: profile.timezone,
+      });
+      setProfile(profileFromCompany(company));
+      dispatch(setCompanyProfile({
+        companyId,
+        name: company.name,
+        initials: companyInitials(company.name),
+      }));
+      setProfileMessage("Company profile saved.");
+    } catch (error: unknown) {
+      setProfileError(error instanceof Error ? error.message : "Unable to save company profile.");
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
   const [pricing, setPricing] = useState({
     firstKm: 500,
     additionalKm: 400,
@@ -136,50 +217,71 @@ export default function SettingsPage() {
               <p className="text-xs text-text-muted mt-0.5">
                 Legal and contact details shown on invoices and communications.
               </p>
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Company name" className="sm:col-span-2">
-                  <Input
-                    value={profile.name}
-                    onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
-                  />
-                </Field>
-                <Field label="Phone">
-                  <Input
-                    value={profile.phone}
-                    onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
-                  />
-                </Field>
-                <Field label="Email">
-                  <Input
-                    type="email"
-                    value={profile.email}
-                    onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
-                  />
-                </Field>
-                <Field label="Address" className="sm:col-span-2">
-                  <Textarea
-                    value={profile.address}
-                    onChange={(e) => setProfile((p) => ({ ...p, address: e.target.value }))}
-                    rows={3}
-                  />
-                </Field>
-                <Field label="Timezone">
-                  <Select
-                    value={profile.timezone}
-                    onChange={(e) => setProfile((p) => ({ ...p, timezone: e.target.value }))}
-                  >
-                    <option value="Africa/Kigali">Africa/Kigali</option>
-                    <option value="Africa/Nairobi">Africa/Nairobi</option>
-                    <option value="UTC">UTC</option>
-                  </Select>
-                </Field>
-                <Field label="Currency">
-                  <Input value={profile.currency} disabled />
-                </Field>
-              </div>
-              <div className="mt-5 flex justify-end">
-                <Button size="sm">Save changes</Button>
-              </div>
+              {!profileLoaded && !profileError ? (
+                <p role="status" className="mt-3 text-sm text-text-muted">
+                  {companyId ? "Loading company profile..." : "Select a company to view its profile."}
+                </p>
+              ) : null}
+              <form onSubmit={saveProfile}>
+                <fieldset disabled={!profileLoaded || profileSaving} className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field label="Company name" className="sm:col-span-2">
+                    <Input
+                      required
+                      minLength={2}
+                      maxLength={255}
+                      value={profile.name}
+                      onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
+                    />
+                  </Field>
+                  <Field label="Phone">
+                    <Input
+                      type="tel"
+                      value={profile.phone}
+                      onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
+                    />
+                  </Field>
+                  <Field label="Email">
+                    <Input
+                      type="email"
+                      value={profile.email}
+                      onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
+                    />
+                  </Field>
+                  <Field label="Address" className="sm:col-span-2">
+                    <Textarea
+                      value={profile.address}
+                      onChange={(e) => setProfile((p) => ({ ...p, address: e.target.value }))}
+                      rows={3}
+                    />
+                  </Field>
+                  <Field label="Timezone">
+                    <Select
+                      value={profile.timezone}
+                      onChange={(e) => setProfile((p) => ({ ...p, timezone: e.target.value }))}
+                    >
+                      <option value="Africa/Kigali">Africa/Kigali</option>
+                      <option value="Africa/Nairobi">Africa/Nairobi</option>
+                      <option value="UTC">UTC</option>
+                    </Select>
+                  </Field>
+                  <Field label="Currency">
+                    <Input value={profile.currency} disabled />
+                  </Field>
+                </fieldset>
+                {profileError ? <p role="alert" className="mt-3 text-sm text-danger">{profileError}</p> : null}
+                {!profileLoaded && profileError ? (
+                  <Button type="button" size="sm" variant="secondary" className="mt-3" onClick={() => {
+                    setProfileError(null);
+                    setLoadAttempt((attempt) => attempt + 1);
+                  }}>Retry</Button>
+                ) : null}
+                {profileMessage ? <p role="status" className="mt-3 text-sm text-success">{profileMessage}</p> : null}
+                <div className="mt-5 flex justify-end">
+                  <Button type="submit" size="sm" disabled={!profileLoaded || profileSaving}>
+                    {profileSaving ? "Saving..." : "Save changes"}
+                  </Button>
+                </div>
+              </form>
             </Card>
           ) : null}
 

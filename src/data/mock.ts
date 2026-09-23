@@ -16,9 +16,9 @@ import type {
 
 export const company: Company = {
   id: "cmp_virunga",
-  name: "Virunga Transport Ltd",
-  logoInitials: "VT",
-  phone: "+250 788 123 456",
+  name: "Kampere Motari Ltd",
+  logoInitials: "KM",
+  phone: "+250 782 027 429",
   email: "ops@virunga.rw",
   address: "KG 7 Ave, Kacyiru, Kigali",
   currency: "RWF",

@@ -615,7 +615,7 @@ export function updateCompany(
   companyId: string,
   body: Partial<{
     name: string;
-    email: string;
+    email: string | null;
     phone: string;
     address: string;
     timezone: string;

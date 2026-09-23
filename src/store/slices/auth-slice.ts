@@ -57,8 +57,16 @@ const authSlice = createSlice({
     clearSession(state) {
       Object.assign(state, { ...initialState, hydrated: true });
     },
+    setCompanyProfile(
+      state,
+      action: PayloadAction<{ companyId: string; name: string; initials: string }>,
+    ) {
+      if (state.companyId !== action.payload.companyId) return;
+      state.companyName = action.payload.name;
+      state.companyInitials = action.payload.initials;
+    },
   },
 });
 
-export const { setHydrated, setSession, clearSession } = authSlice.actions;
+export const { setHydrated, setSession, clearSession, setCompanyProfile } = authSlice.actions;
 export default authSlice.reducer;
