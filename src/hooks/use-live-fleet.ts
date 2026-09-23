@@ -8,7 +8,7 @@ import {
   fleetLiveToMotorcycle,
   type LocationUpdatePayload,
 } from '@/lib/api/locations';
-import { appConfig } from '@/lib/config';
+import { appConfig, ngrokSocketExtraHeaders } from '@/lib/config';
 import { useAppSelector } from '@/store';
 import type { Motorcycle } from '@/types';
 
@@ -83,6 +83,7 @@ export function useLiveFleet(companyId?: string) {
         auth: { token: access },
         transports: ['websocket', 'polling'],
         autoConnect: true,
+        extraHeaders: ngrokSocketExtraHeaders(),
       });
       socket.on('connect', () => {
         socket?.emit('joinCompany', { companyId: resolvedCompanyId });

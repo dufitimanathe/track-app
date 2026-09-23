@@ -1,4 +1,4 @@
-import { appConfig } from '@/lib/config';
+import { appConfig, withNgrokSkipBrowserWarning } from '@/lib/config';
 import { refreshTokens } from '@/lib/api/auth-refresh';
 
 export class ApiError extends Error {
@@ -189,7 +189,7 @@ export async function apiFetchRaw<T>(
   init: RequestInit = {},
   options?: { companyId?: string | null; skipAuth?: boolean; _retried?: boolean },
 ): Promise<{ data: T; meta?: PaginationMeta & Record<string, unknown> }> {
-  const headers = new Headers(init.headers);
+  const headers = withNgrokSkipBrowserWarning(new Headers(init.headers));
   if (!headers.has('Content-Type') && init.body) {
     headers.set('Content-Type', 'application/json');
   }

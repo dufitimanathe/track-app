@@ -12,7 +12,7 @@ import {
   type LiveDriverStateDto,
   type TrackingCompanyStatsDto,
 } from '@/lib/api/tracking';
-import { appConfig } from '@/lib/config';
+import { appConfig, ngrokSocketExtraHeaders } from '@/lib/config';
 import {
   classifyGpsQuality,
   type GpsQuality,
@@ -262,6 +262,7 @@ export function useLiveTracking(companyId?: string) {
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: false,
+      extraHeaders: ngrokSocketExtraHeaders(),
     });
     socketRef.current = socket;
     setConnectionState('reconnecting');

@@ -2,7 +2,7 @@
 
 import { useToast } from "@/components/ui/toast";
 import { getAccessToken } from "@/lib/api/client";
-import { appConfig } from "@/lib/config";
+import { appConfig, ngrokSocketExtraHeaders } from "@/lib/config";
 import { useAppSelector } from "@/store";
 import { useEffect, useRef } from "react";
 import { io, type Socket } from "socket.io-client";
@@ -42,6 +42,7 @@ export function useAdminRealtimeToasts(enabled: boolean) {
         auth: { token },
         transports: ["websocket", "polling"],
         autoConnect: true,
+        extraHeaders: ngrokSocketExtraHeaders(),
       });
 
       socket.on("connect", () => {

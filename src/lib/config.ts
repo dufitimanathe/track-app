@@ -15,3 +15,23 @@ export const appConfig = {
 export function isGoogleMapsEnabled(): boolean {
   return appConfig.googleMapsBrowserKey.trim().length > 0;
 }
+
+/** Free ngrok serves an HTML interstitial (ERR_NGROK_6024) unless this header is set. */
+export function isNgrokUrl(url: string): boolean {
+  return /ngrok/i.test(url);
+}
+
+export function withNgrokSkipBrowserWarning(
+  headers: Headers | Record<string, string> = {},
+): Headers {
+  const next = headers instanceof Headers ? headers : new Headers(headers);
+  if (isNgrokUrl(appConfig.apiUrl) || isNgrokUrl(appConfig.wsUrl)) {
+    next.set('ngrok-skip-browser-warning', 'true');
+  }
+  return next;
+}
+
+export function ngrokSocketExtraHeaders(): Record<string, string> | undefined {
+  if (!isNgrokUrl(appConfig.wsUrl)) return undefined;
+  return { 'ngrok-skip-browser-warning': 'true' };
+}

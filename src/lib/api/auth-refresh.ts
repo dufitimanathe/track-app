@@ -1,4 +1,4 @@
-import { appConfig } from '@/lib/config';
+import { appConfig, withNgrokSkipBrowserWarning } from '@/lib/config';
 
 /** Isolated from client.ts to avoid circular imports during 401 refresh. */
 export async function refreshTokens(refreshToken: string): Promise<{
@@ -7,7 +7,9 @@ export async function refreshTokens(refreshToken: string): Promise<{
 }> {
   const response = await fetch(`${appConfig.apiUrl}/auth/refresh`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: withNgrokSkipBrowserWarning({
+      'Content-Type': 'application/json',
+    }),
     body: JSON.stringify({ refreshToken }),
   });
 
