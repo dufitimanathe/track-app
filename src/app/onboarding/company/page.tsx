@@ -12,7 +12,6 @@ import {
   pickMembership,
   registerCompanyRequest,
 } from "@/lib/api/auth";
-import { updateOnboarding } from "@/lib/api/resources";
 import { clearAdminDraft, loadAdminDraft } from "@/lib/onboarding-draft";
 import {
   isValidEmail,
@@ -32,8 +31,11 @@ export default function OnboardingCompanyPage() {
     phone: "",
     email: "",
     address: "",
+    registrationNumber: "",
     currency: "RWF",
     timezone: "Africa/Kigali",
+    registrationDocUrl: "",
+    directorIdUrl: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +76,16 @@ export default function OnboardingCompanyPage() {
         setLoading(false);
         return;
       }
+      if (!form.registrationNumber.trim()) {
+        setError("Registration number is required for Kampere Motari review.");
+        setLoading(false);
+        return;
+      }
+      if (!form.registrationDocUrl.trim()) {
+        setError("Add a link to your business registration document.");
+        setLoading(false);
+        return;
+      }
 
       const companyPhone = form.phone.trim()
         ? normalizeRwandaPhone(form.phone) ?? undefined
@@ -82,12 +94,28 @@ export default function OnboardingCompanyPage() {
         ? normalizeRwandaPhone(admin.phone) ?? undefined
         : undefined;
 
+      const documents = [
+        {
+          type: "BUSINESS_REGISTRATION",
+          title: "Business registration certificate",
+          fileUrl: form.registrationDocUrl.trim(),
+        },
+      ];
+      if (form.directorIdUrl.trim()) {
+        documents.push({
+          type: "DIRECTOR_ID",
+          title: "Director / admin ID",
+          fileUrl: form.directorIdUrl.trim(),
+        });
+      }
+
       const auth = await registerCompanyRequest({
         company: {
           name: form.name.trim(),
           phone: companyPhone,
           email: form.email.trim() || undefined,
           address: form.address.trim() || undefined,
+          registrationNumber: form.registrationNumber.trim(),
           currency: form.currency,
           timezone: form.timezone,
         },
@@ -98,6 +126,7 @@ export default function OnboardingCompanyPage() {
           phone: adminPhone,
           password: admin.password,
         },
+        documents,
       });
 
       persistAuth(auth);
@@ -117,16 +146,13 @@ export default function OnboardingCompanyPage() {
           companyId: membership.companyId,
           companyName: membership.companyName,
           companyInitials: companyInitials(membership.companyName),
+          companyStatus: membership.companyStatus ?? "PENDING_REVIEW",
           membershipId: membership.id,
         }),
       );
 
-      await updateOnboarding(membership.companyId, {
-        companyProfileCompleted: true,
-      });
-
       clearAdminDraft();
-      router.push("/onboarding/operations");
+      router.push("/onboarding/pending");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
@@ -141,7 +167,7 @@ export default function OnboardingCompanyPage() {
           Company details
         </h1>
         <p className="mt-1 text-sm text-text-secondary">
-          This creates your FleetOps workspace and admin account.
+          Register your organisation with Kampere Motari. Access opens after document validation and approval.
         </p>
       </div>
 
@@ -150,6 +176,13 @@ export default function OnboardingCompanyPage() {
           <Input
             value={form.name}
             onChange={(e) => update("name", e.target.value)}
+            required
+          />
+        </Field>
+        <Field label="Registration number">
+          <Input
+            value={form.registrationNumber}
+            onChange={(e) => update("registrationNumber", e.target.value)}
             required
           />
         </Field>
@@ -177,6 +210,24 @@ export default function OnboardingCompanyPage() {
             value={form.address}
             onChange={(e) => update("address", e.target.value)}
             required
+          />
+        </Field>
+        <Field
+          label="Business registration document URL"
+          hint="Share a Drive / Dropbox / hosted file link for Kampere Motari to validate"
+        >
+          <Input
+            value={form.registrationDocUrl}
+            onChange={(e) => update("registrationDocUrl", e.target.value)}
+            placeholder="https://"
+            required
+          />
+        </Field>
+        <Field label="Director ID document URL (optional)">
+          <Input
+            value={form.directorIdUrl}
+            onChange={(e) => update("directorIdUrl", e.target.value)}
+            placeholder="https://"
           />
         </Field>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -213,7 +264,7 @@ export default function OnboardingCompanyPage() {
             Back
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? "Creating…" : "Create company"}
+            {loading ? "Submitting…" : "Submit for approval"}
           </Button>
         </div>
       </form>

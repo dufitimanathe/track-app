@@ -19,6 +19,7 @@ export interface Membership {
   companyId: string;
   companyName: string;
   companySlug: string;
+  companyStatus?: string;
   role: UserRole;
   status: string;
   joinedAt: string;
@@ -44,6 +45,7 @@ export async function registerCompanyRequest(input: {
     email?: string;
     phone?: string;
     address?: string;
+    registrationNumber?: string;
     timezone?: string;
     currency?: string;
   };
@@ -54,6 +56,12 @@ export async function registerCompanyRequest(input: {
     phone?: string;
     password: string;
   };
+  documents?: Array<{
+    type: string;
+    title: string;
+    fileUrl: string;
+    notes?: string;
+  }>;
 }): Promise<AuthResponse> {
   return apiFetch<AuthResponse>(
     '/auth/register-company',
@@ -120,6 +128,7 @@ export function persistAuth(
 export function pickMembership(memberships: Membership[]): Membership | null {
   const active = memberships.filter((m) => m.status === 'ACTIVE');
   const preferred =
+    active.find((m) => m.role === 'PLATFORM_ADMIN') ??
     active.find((m) => m.role === 'COMPANY_ADMIN') ??
     active.find((m) => m.role === 'SUPERVISOR') ??
     active.find((m) => m.role === 'ACCOUNTANT') ??

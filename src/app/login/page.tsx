@@ -13,7 +13,7 @@ import {
   pickMembership,
 } from "@/lib/api/auth";
 import { isRememberMeEnabled, setRememberMe } from "@/lib/api/client";
-import { homeForRole } from "@/lib/navigation";
+import { destinationForMembership } from "@/lib/navigation";
 import { useAppDispatch } from "@/store";
 import { setSession } from "@/store/slices/auth-slice";
 import Link from "next/link";
@@ -60,14 +60,15 @@ function LoginForm() {
           companyId: membership.companyId,
           companyName: membership.companyName,
           companyInitials: companyInitials(membership.companyName),
+          companyStatus: membership.companyStatus ?? "ACTIVE",
           membershipId: membership.id,
         }),
       );
       const redirect = search.get("redirect");
-      if (redirect && redirect.startsWith("/")) {
+      if (redirect && redirect.startsWith("/") && redirect !== "/") {
         router.replace(redirect);
       } else {
-        router.replace(homeForRole(membership.role));
+        router.replace(destinationForMembership(membership));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -146,6 +147,11 @@ function LoginForm() {
             </Link>
           </p>
         </Card>
+        <p className="mt-5 text-center text-sm text-text-secondary">
+          <Link href="/" className="font-medium text-primary hover:underline">
+            ← Back to home
+          </Link>
+        </p>
       </div>
     </div>
   );

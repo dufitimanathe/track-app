@@ -18,6 +18,7 @@ import {
   type AssignmentDto,
 } from "@/lib/api/resources";
 import { initials } from "@/lib/utils";
+import { opsBasePath } from "@/lib/navigation";
 import { useAppSelector } from "@/store";
 import type { Motorcycle, Rider, Trip } from "@/types";
 import { ArrowLeft, Bike, MapPin, Phone, Smartphone } from "lucide-react";
@@ -28,6 +29,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 export default function RiderDetailPage() {
   const params = useParams<{ id: string }>();
   const companyId = useAppSelector((s) => s.auth.companyId);
+  const role = useAppSelector((s) => s.auth.role);
+  const base = opsBasePath(role);
+  const canManage = role === "COMPANY_ADMIN";
+  const backHref = role === "SUPERVISOR" ? `${base}/fleet` : `${base}/riders`;
+  const backLabel = role === "SUPERVISOR" ? "Back to fleet" : "Back to riders";
   const [rider, setRider] = useState<Rider | null>(null);
   const [motorcycle, setMotorcycle] = useState<Motorcycle | null>(null);
   const [history, setHistory] = useState<
@@ -164,8 +170,8 @@ export default function RiderDetailPage() {
       <div className="max-w-[1100px] mx-auto py-16 text-center space-y-3">
         <h1 className="text-xl font-semibold text-text">Rider not found</h1>
         <p className="text-sm text-text-secondary">{error ?? "No rider for this id."}</p>
-        <Link href="/admin/riders" className="text-sm text-primary">
-          Back to riders
+        <Link href={backHref} className="text-sm text-primary">
+          {backLabel}
         </Link>
       </div>
     );
@@ -175,25 +181,27 @@ export default function RiderDetailPage() {
     <div className="space-y-5 sm:space-y-6 max-w-[1100px] mx-auto">
       <div>
         <Link
-          href="/admin/riders"
+          href={backHref}
           className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text mb-3"
         >
           <ArrowLeft className="size-4" />
-          Back to riders
+          {backLabel}
         </Link>
         <PageHeader
           title={rider.name}
           description="Rider profile, motorcycle assignment, and phone-based location tracking."
           actions={
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant="danger-outline"
-                size="sm"
-                disabled={busy}
-                onClick={() => setConfirmDeactivate(true)}
-              >
-                Deactivate
-              </Button>
+              {canManage ? (
+                <Button
+                  variant="danger-outline"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => setConfirmDeactivate(true)}
+                >
+                  Deactivate
+                </Button>
+              ) : null}
               {rider.phone ? (
                 <a href={`tel:${rider.phone}`}>
                   <Button size="sm" leftIcon={<Phone className="size-3.5" />}>

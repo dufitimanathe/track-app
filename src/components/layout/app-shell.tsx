@@ -51,6 +51,7 @@ function NavLink({
   const pathname = usePathname();
   const active =
     item.href === "/admin" ||
+    item.href === "/platform" ||
     item.href === "/supervisor" ||
     item.href === "/rider" ||
     item.href === "/accountant"

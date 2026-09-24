@@ -37,6 +37,8 @@ export type TripStatus =
 export type RiderAvailability =
   | "offline"
   | "available"
+  | "busy"
+  | "awaiting_availability"
   | "reserved"
   | "assigned"
   | "to_pickup"

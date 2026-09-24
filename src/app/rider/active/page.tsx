@@ -1,6 +1,7 @@
 "use client";
 
 import { OpsMap } from "@/components/maps/ops-map";
+import { RiderAvailabilityCard } from "@/components/rider/availability-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Timeline } from "@/components/ui/overlay";
@@ -12,11 +13,12 @@ import {
   fetchRiderMe,
   fetchTrips,
   startTrip,
+  type RiderMeDto,
 } from "@/lib/api/resources";
 import { formatKm, formatRwf } from "@/lib/utils";
 import { useAppSelector } from "@/store";
 import type { Motorcycle, Trip } from "@/types";
-import { CheckCircle2, Flag, MapPinned, Play } from "lucide-react";
+import { Flag, MapPinned, Play } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -27,6 +29,7 @@ export default function RiderActiveTripPage() {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [rawStatus, setRawStatus] = useState<string>("");
   const [moto, setMoto] = useState<Motorcycle | null>(null);
+  const [rider, setRider] = useState<RiderMeDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +44,7 @@ export default function RiderActiveTripPage() {
         fetchTrips(companyId, { limit: 20, sort: "updatedAt:DESC" }),
       ]);
       setMoto(mapRiderMeMotorcycle(me));
+      setRider(me);
       const active =
         trips.items.find((t) =>
           [
@@ -105,7 +109,12 @@ export default function RiderActiveTripPage() {
     try {
       if (kind === "arrive") await arriveTrip(companyId, trip.id);
       if (kind === "start") await startTrip(companyId, trip.id);
-      if (kind === "complete") await completeTrip(companyId, trip.id);
+      if (kind === "complete") {
+        const completed = await completeTrip(companyId, trip.id);
+        setTrip(mapTrip(completed));
+        setRawStatus(completed.status);
+        setRider((current) => current ? { ...current, availabilityStatus: "AWAITING_AVAILABILITY" } : current);
+      }
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Action failed");
@@ -124,8 +133,12 @@ export default function RiderActiveTripPage() {
 
   if (!trip) {
     return (
-      <div className="mx-auto max-w-lg py-16 text-center space-y-3">
+      <div className="mx-auto max-w-lg py-6 space-y-3">
         <p className="text-sm text-text-secondary">No active trip right now.</p>
+        {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+        {rider && <RiderAvailabilityCard companyId={companyId} riderId={rider.id}
+          status={rider.availabilityStatus} hasMotorcycle={Boolean(moto)}
+          onUpdated={(updated) => setRider((current) => current ? { ...current, ...updated } : current)} />}
         <Link href="/rider" className="text-sm font-medium text-primary">
           Back to home
         </Link>
@@ -170,7 +183,7 @@ export default function RiderActiveTripPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Active trip
+            {done ? "Completed trip" : "Active trip"}
           </p>
           <h1 className="text-xl font-semibold text-text tracking-tight mt-0.5">
             {trip.id.slice(0, 8)}
@@ -183,7 +196,11 @@ export default function RiderActiveTripPage() {
         <p className="text-sm text-danger bg-danger-soft rounded-[8px] px-3 py-2">{error}</p>
       ) : null}
 
-      {moto ? (
+      {done && rider ? <RiderAvailabilityCard companyId={companyId} riderId={rider.id}
+        status={rider.availabilityStatus} hasMotorcycle={Boolean(moto)}
+        onUpdated={(updated) => setRider((current) => current ? { ...current, ...updated } : current)} /> : null}
+
+      {moto && !done ? (
         <OpsMap
           motorcycles={[moto]}
           selectedId={moto.id}
@@ -231,18 +248,7 @@ export default function RiderActiveTripPage() {
         >
           {busy ? "Updating…" : action.label}
         </Button>
-      ) : done ? (
-        <Card padding="md" className="text-center bg-success-soft border-green-200">
-          <CheckCircle2 className="size-8 text-success mx-auto" />
-          <p className="mt-2 text-sm font-semibold text-text">Trip completed</p>
-          <p className="text-xs text-text-secondary mt-1">
-            Great work — head back online when you&apos;re ready.
-          </p>
-          <Link href="/rider" className="mt-3 inline-block text-xs font-medium text-primary">
-            Back to home
-          </Link>
-        </Card>
-      ) : (
+      ) : !done ? (
         <Card padding="md">
           <p className="text-sm text-text-secondary">
             Accept this assignment from Home before continuing.
@@ -251,7 +257,7 @@ export default function RiderActiveTripPage() {
             Open home
           </Link>
         </Card>
-      )}
+      ) : null}
     </div>
   );
 }

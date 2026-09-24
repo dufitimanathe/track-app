@@ -2,6 +2,8 @@ import { cn } from "@/lib/utils";
 
 type Tone =
   | "available"
+  | "busy"
+  | "awaiting_availability"
   | "offline"
   | "online"
   | "reserved"
@@ -31,6 +33,8 @@ type Tone =
   | "on_trip";
 
 const toneStyles: Record<Tone, string> = {
+  busy: "bg-warning-soft text-warning border-amber-200",
+  awaiting_availability: "bg-warning-soft text-warning border-amber-200",
   available: "bg-success-soft text-success border-green-200",
   online: "bg-success-soft text-success border-green-200",
   completed: "bg-success-soft text-success border-green-200",
@@ -62,6 +66,8 @@ const toneStyles: Record<Tone, string> = {
 };
 
 const labels: Partial<Record<Tone, string>> = {
+  busy: "Busy · other passenger",
+  awaiting_availability: "Confirm availability",
   available: "Available",
   offline: "Offline",
   online: "Online",
@@ -93,6 +99,8 @@ const labels: Partial<Record<Tone, string>> = {
 };
 
 const dotColors: Record<Tone, string> = {
+  busy: "bg-warning",
+  awaiting_availability: "bg-warning",
   available: "bg-success",
   online: "bg-success",
   completed: "bg-success",

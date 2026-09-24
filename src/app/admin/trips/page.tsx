@@ -7,6 +7,7 @@ import { EmptyState, PageHeader, Tabs } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { fetchTrips } from "@/lib/api/resources";
 import { mapTrip } from "@/lib/api/mappers";
+import { opsBasePath } from "@/lib/navigation";
 import { formatKm, formatRwf } from "@/lib/utils";
 import { useAppSelector } from "@/store";
 import type { Trip, TripStatus } from "@/types";
@@ -24,6 +25,8 @@ const TAB_STATUS: Record<TripTab, string | undefined> = {
 
 export default function AdminTripsPage() {
   const companyId = useAppSelector((s) => s.auth.companyId);
+  const role = useAppSelector((s) => s.auth.role);
+  const base = opsBasePath(role);
   const [tab, setTab] = useState<TripTab>("all");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -122,7 +125,7 @@ export default function AdminTripsPage() {
                 {items.map((t) => (
                   <tr key={t.id} className="hover:bg-surface-muted/40">
                     <td className="px-4 py-3">
-                      <Link href={`/admin/trips/${t.id}`} className="font-medium text-primary">
+                      <Link href={`${base}/trips/${t.id}`} className="font-medium text-primary">
                         {t.id.slice(0, 8)}…
                       </Link>
                       <p className="text-xs text-text-muted">{t.employeeName}</p>

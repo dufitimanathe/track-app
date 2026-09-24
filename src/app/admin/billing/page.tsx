@@ -52,7 +52,7 @@ export default function BillingPage() {
     try {
       const [inv, bill, company] = await Promise.all([
         fetchInvoices(companyId, { limit: 20, sort: "periodStart:DESC" }),
-        fetchBilling(companyId, { limit: 200, sort: "createdAt:DESC" }),
+        fetchBilling(companyId, { limit: 100, sort: "createdAt:DESC" }),
         fetchCompany(companyId).catch(() => null),
       ]);
       setInvoices(inv.items.map(mapInvoice));

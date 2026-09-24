@@ -506,9 +506,9 @@ export function LiveTrackingView({
                   >
                     Center
                   </Button>
-                  {linksBase === 'admin' ? (
+                  {linksBase === 'admin' || linksBase === 'supervisor' ? (
                     <>
-                      <Link href={`/admin/riders/${selectedRider.riderId}`}>
+                      <Link href={`/${linksBase}/riders/${selectedRider.riderId}`}>
                         <Button
                           size="sm"
                           variant="secondary"
@@ -519,7 +519,7 @@ export function LiveTrackingView({
                       </Link>
                       {selectedRider.motorcycleId ? (
                         <Link
-                          href={`/admin/fleet/${selectedRider.motorcycleId}`}
+                          href={`/${linksBase}/fleet/${selectedRider.motorcycleId}`}
                         >
                           <Button size="sm" variant="secondary">
                             Motorcycle

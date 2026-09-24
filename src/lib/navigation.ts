@@ -80,7 +80,14 @@ export const riderNav: NavItem[] = [
   { label: "Profile", href: "/rider/profile", icon: UserCircle },
 ];
 
+export const platformNav: NavItem[] = [
+  { label: "Overview", href: "/platform", icon: LayoutDashboard },
+  { label: "Companies", href: "/platform/companies", icon: Building2, badge: "pending" },
+  { label: "Register company", href: "/platform/companies/new", icon: ClipboardList },
+];
+
 export function navForRole(role: UserRole): NavItem[] {
+  if (role === "PLATFORM_ADMIN") return platformNav;
   if (role === "SUPERVISOR") return supervisorNav;
   if (role === "ACCOUNTANT") return accountantNav;
   if (role === "RIDER") return riderNav;
@@ -88,9 +95,33 @@ export function navForRole(role: UserRole): NavItem[] {
 }
 
 export function homeForRole(role: UserRole): string {
+  if (role === "PLATFORM_ADMIN") return "/platform";
+  if (role === "EMPLOYEE") return "/#employees";
   if (role === "SUPERVISOR") return "/supervisor";
   if (role === "ACCOUNTANT") return "/accountant";
   if (role === "RIDER") return "/rider";
+  return "/admin";
+}
+
+export function destinationForMembership(membership: {
+  role: UserRole;
+  companyStatus?: string;
+}): string {
+  if (membership.role === "PLATFORM_ADMIN") return "/platform";
+  if (
+    membership.role === "COMPANY_ADMIN" &&
+    (membership.companyStatus === "PENDING_REVIEW" ||
+      membership.companyStatus === "REJECTED")
+  ) {
+    return "/onboarding/pending";
+  }
+  return homeForRole(membership.role);
+}
+
+/** Role-scoped base path for shared ops pages (trips, fleet links, etc.). */
+export function opsBasePath(role: UserRole): "/admin" | "/supervisor" | "/accountant" {
+  if (role === "SUPERVISOR") return "/supervisor";
+  if (role === "ACCOUNTANT") return "/accountant";
   return "/admin";
 }
 
@@ -107,7 +138,7 @@ export function roleLabel(role: UserRole): string {
     case "EMPLOYEE":
       return "Employee";
     case "PLATFORM_ADMIN":
-      return "Platform Admin";
+      return "Super Admin";
     default:
       return role;
   }

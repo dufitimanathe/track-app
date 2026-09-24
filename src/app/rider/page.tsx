@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { RiderAvailabilityCard } from "@/components/rider/availability-card";
 import { Card, MetricCard } from "@/components/ui/card";
 import { Modal } from "@/components/ui/overlay";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -10,15 +11,14 @@ import {
   declineTrip,
   fetchRiderMe,
   fetchTrips,
-  updateRiderAvailability,
   type RiderMeDto,
 } from "@/lib/api/resources";
 import { formatKm, formatRwf, greetingForHour } from "@/lib/utils";
 import { useAppSelector } from "@/store";
 import type { Motorcycle, Trip } from "@/types";
-import { Bike, MapPin, Navigation, Power, Route } from "lucide-react";
+import { Bike, MapPin, Navigation, Route } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export default function RiderHomePage() {
   const { userName, companyId } = useAppSelector((s) => s.auth);
@@ -32,16 +32,18 @@ export default function RiderHomePage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const loadVersion = useRef(0);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     if (!companyId) return;
-    setLoading(true);
-    setError(null);
+    const version = ++loadVersion.current;
+    if (!silent) { setLoading(true); setError(null); }
     try {
       const [rider, tripResult] = await Promise.all([
         fetchRiderMe(companyId),
         fetchTrips(companyId, { limit: 30, sort: "createdAt:DESC" }),
       ]);
+      if (version !== loadVersion.current) return;
       setMe(rider);
       setMoto(mapRiderMeMotorcycle(rider));
       setRawTrips(tripResult.items);
@@ -51,15 +53,23 @@ export default function RiderHomePage() {
       );
       setAssignmentOpen(Boolean(pending));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load rider home");
+      if (!silent && version === loadVersion.current) setError(err instanceof Error ? err.message : "Failed to load rider home");
     } finally {
-      setLoading(false);
+      if (version === loadVersion.current) setLoading(false);
     }
   }, [companyId]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (busy) return;
+    const refresh = () => { if (document.visibilityState === "visible") void load(true); };
+    const timer = window.setInterval(refresh, 10000);
+    window.addEventListener("focus", refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", refresh); };
+  }, [busy, load]);
 
   const online = me
     ? !["OFFLINE", "SUSPENDED"].includes(me.availabilityStatus.toUpperCase())
@@ -81,20 +91,6 @@ export default function RiderHomePage() {
   const completedToday = useMemo(() => {
     return trips.filter((t) => t.status === "completed").length;
   }, [trips]);
-
-  async function setAvailability(next: "AVAILABLE" | "OFFLINE") {
-    if (!companyId || !me) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const updated = await updateRiderAvailability(companyId, me.id, next);
-      setMe({ ...me, ...updated });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Availability update failed");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function onAccept() {
     if (!companyId || !pendingAssignment) return;
@@ -179,27 +175,13 @@ export default function RiderHomePage() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Button
-          size="lg"
-          fullWidth
-          disabled={busy || online}
-          leftIcon={<Power className="size-4" />}
-          onClick={() => void setAvailability("AVAILABLE")}
-        >
-          Go Online
-        </Button>
-        <Button
-          size="lg"
-          fullWidth
-          variant="secondary"
-          disabled={busy || !online}
-          leftIcon={<Power className="size-4" />}
-          onClick={() => void setAvailability("OFFLINE")}
-        >
-          Go Offline
-        </Button>
-      </div>
+      {!activeTrip && me && <RiderAvailabilityCard
+        companyId={companyId} riderId={me.id} status={me.availabilityStatus}
+        hasMotorcycle={Boolean(moto)} onUpdated={(updated) => {
+          ++loadVersion.current;
+          setMe((current) => current ? { ...current, ...updated } : current);
+        }}
+      />}
 
       {activeTrip ? (
         <Card padding="md" className="border-l-[3px] border-l-primary">

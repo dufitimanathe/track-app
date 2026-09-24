@@ -91,25 +91,47 @@ export function Modal({
   children,
   footer,
 }: ModalProps) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
+  if (!open || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <button
         type="button"
         aria-label="Close modal"
-        className="absolute inset-0 bg-slate-900/40"
+        className="absolute inset-0 bg-slate-900/45 backdrop-blur-[2px]"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full sm:max-w-md rounded-t-[16px] sm:rounded-[12px] border border-border bg-surface shadow-[var(--shadow-overlay)]">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        className="relative z-10 w-full max-w-md rounded-[12px] border border-border bg-surface shadow-[var(--shadow-overlay)]"
+      >
         <div className="border-b border-border px-4 py-4 sm:px-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-text">{title}</h2>
+              <h2 id="modal-title" className="text-lg font-semibold text-text">
+                {title}
+              </h2>
               {description ? (
                 <p className="mt-1 text-sm text-text-secondary">{description}</p>
               ) : null}
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close">
               <X className="size-4" />
             </Button>
           </div>
@@ -121,7 +143,8 @@ export function Modal({
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

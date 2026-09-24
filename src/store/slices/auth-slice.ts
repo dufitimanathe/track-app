@@ -12,6 +12,7 @@ export interface AuthState {
   companyId: string;
   companyName: string;
   companyInitials: string;
+  companyStatus: string;
   membershipId: string;
 }
 
@@ -26,6 +27,7 @@ const initialState: AuthState = {
   companyId: '',
   companyName: '',
   companyInitials: '',
+  companyStatus: 'ACTIVE',
   membershipId: '',
 };
 
@@ -47,12 +49,16 @@ const authSlice = createSlice({
         companyId: string;
         companyName: string;
         companyInitials: string;
+        companyStatus?: string;
         membershipId: string;
       }>,
     ) {
       state.isAuthenticated = true;
       state.hydrated = true;
-      Object.assign(state, action.payload);
+      Object.assign(state, {
+        ...action.payload,
+        companyStatus: action.payload.companyStatus ?? 'ACTIVE',
+      });
     },
     clearSession(state) {
       Object.assign(state, { ...initialState, hydrated: true });

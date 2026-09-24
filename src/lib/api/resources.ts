@@ -479,7 +479,7 @@ export function fetchRiderMe(companyId: string) {
 export function updateRiderAvailability(
   companyId: string,
   riderId: string,
-  availabilityStatus: 'OFFLINE' | 'AVAILABLE',
+  availabilityStatus: 'OFFLINE' | 'AVAILABLE' | 'BUSY',
 ) {
   return apiFetch<RiderDto>(`/companies/${companyId}/riders/${riderId}/availability`, {
     method: 'POST',

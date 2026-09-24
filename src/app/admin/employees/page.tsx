@@ -24,6 +24,8 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 export default function EmployeesPage() {
   const companyId = useAppSelector((s) => s.auth.companyId);
+  const role = useAppSelector((s) => s.auth.role);
+  const canManage = role === "COMPANY_ADMIN";
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<Employee[]>([]);
@@ -177,12 +179,18 @@ export default function EmployeesPage() {
     <div className="space-y-4 sm:space-y-5 max-w-[1400px] mx-auto">
       <PageHeader
         title="Employees"
-        description="People who can request transport (WhatsApp / portal)"
+        description={
+          canManage
+            ? "People who can request transport (WhatsApp / portal)"
+            : "Company employees who can request transport (view only)"
+        }
         actions={
-          <Button type="button" onClick={openAdd}>
-            <Plus className="size-4" />
-            Add employee
-          </Button>
+          canManage ? (
+            <Button type="button" onClick={openAdd}>
+              <Plus className="size-4" />
+              Add employee
+            </Button>
+          ) : undefined
         }
       />
 
@@ -235,12 +243,12 @@ export default function EmployeesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusBadge status={e.status === "active" ? "available" : "offline"} label={e.status} />
-                    {raw ? (
+                    {canManage && raw ? (
                       <Button type="button" variant="ghost" size="sm" onClick={() => openEdit(raw)}>
                         Edit
                       </Button>
                     ) : null}
-                    {e.status === "active" ? (
+                    {canManage && e.status === "active" ? (
                       <Button
                         type="button"
                         variant="ghost"

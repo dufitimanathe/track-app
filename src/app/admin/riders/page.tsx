@@ -6,6 +6,7 @@ import { Field, Input, SearchInput } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { EmptyState, PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { mapAvailability } from "@/lib/api/mappers";
 import { Modal, FloatingMenu } from "@/components/ui/overlay";
 import {
   createRider,
@@ -319,14 +320,7 @@ export default function RidersPage() {
                   </Link>
                   <div className="flex items-center gap-2 shrink-0">
                     <StatusBadge
-                      status={
-                        r.availabilityStatus === "AVAILABLE"
-                          ? "available"
-                          : r.availabilityStatus === "OFFLINE"
-                            ? "offline"
-                            : "on_trip"
-                      }
-                      label={r.availabilityStatus.toLowerCase()}
+                      status={mapAvailability(r.availabilityStatus)}
                     />
                     <StatusBadge
                       status={r.status === "ACTIVE" ? "online" : "offline"}

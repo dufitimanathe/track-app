@@ -20,6 +20,7 @@ import {
   type AssignmentDto,
 } from "@/lib/api/resources";
 import { formatKm, initials } from "@/lib/utils";
+import { opsBasePath } from "@/lib/navigation";
 import { useAppSelector } from "@/store";
 import type { Motorcycle, Rider, Trip } from "@/types";
 import {
@@ -38,6 +39,11 @@ import { useCallback, useEffect, useState } from "react";
 export default function MotorcycleDetailPage() {
   const params = useParams<{ id: string }>();
   const companyId = useAppSelector((s) => s.auth.companyId);
+  const role = useAppSelector((s) => s.auth.role);
+  const base = opsBasePath(role);
+  const fleetHome = role === "SUPERVISOR" ? `${base}/fleet` : role === "ACCOUNTANT" ? `${base}/trips` : `${base}/fleet`;
+  const liveHome = role === "SUPERVISOR" ? `${base}/fleet` : "/admin/live";
+  const canManageFleet = role === "COMPANY_ADMIN";
   const [moto, setMoto] = useState<Motorcycle | null>(null);
   const [rider, setRider] = useState<Rider | null>(null);
   const [activeAssignment, setActiveAssignment] = useState<AssignmentDto | null>(null);
@@ -167,7 +173,7 @@ export default function MotorcycleDetailPage() {
           {error ?? `No unit matches ${params.id}.`}
         </p>
         <Link
-          href="/admin/fleet"
+          href={fleetHome}
           className="inline-flex h-10 items-center rounded-[8px] border border-border bg-surface px-4 text-sm font-medium text-text hover:bg-surface-muted"
         >
           Back to fleet
@@ -187,7 +193,7 @@ export default function MotorcycleDetailPage() {
               status={moto.status === "unauthorized" ? "unauthorized" : moto.status}
             />
             <Link
-              href="/admin/fleet"
+              href={fleetHome}
               className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-border bg-surface px-3 text-xs font-medium text-text hover:bg-surface-muted"
             >
               <ArrowLeft className="size-3.5" />
@@ -271,7 +277,7 @@ export default function MotorcycleDetailPage() {
                 {relatedTrips.map((t) => (
                   <li key={t.id}>
                     <Link
-                      href={`/admin/trips/${t.id}`}
+                      href={`${base}/trips/${t.id}`}
                       className="flex items-center justify-between gap-3 px-1 py-3 hover:bg-surface-muted/50 rounded-[8px] transition-colors"
                     >
                       <div className="min-w-0">
@@ -405,16 +411,18 @@ export default function MotorcycleDetailPage() {
           </Card>
 
           <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={busy}
-              leftIcon={<Wrench className="size-3.5" />}
-              onClick={() => void onMaintenance()}
-            >
-              Mark maintenance
-            </Button>
-            <Link href="/admin/live">
+            {canManageFleet ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={busy}
+                leftIcon={<Wrench className="size-3.5" />}
+                onClick={() => void onMaintenance()}
+              >
+                Mark maintenance
+              </Button>
+            ) : null}
+            <Link href={liveHome}>
               <Button size="sm">View on live map</Button>
             </Link>
           </div>

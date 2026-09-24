@@ -78,6 +78,8 @@ function formatWhen(value?: string | null): string {
 
 export function mapAvailability(status: string): RiderAvailability {
   const s = status.toUpperCase();
+  if (s === 'BUSY') return 'busy';
+  if (s === 'AWAITING_AVAILABILITY') return 'awaiting_availability';
   if (s.includes('OFFLINE')) return 'offline';
   if (s.includes('SUSPEND')) return 'suspended';
   if (s.includes('ON_TRIP')) return 'on_trip';

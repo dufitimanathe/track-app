@@ -13,19 +13,18 @@ import {
   getStoredCompanyId,
   setStoredCompanyId,
 } from '@/lib/api/client';
-import { homeForRole } from '@/lib/navigation';
+import { destinationForMembership } from '@/lib/navigation';
+import { isProtectedRoute, isPublicRoute } from '@/lib/public-routes';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { clearSession, setHydrated, setSession } from '@/store/slices/auth-slice';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 
-const PUBLIC_PREFIXES = ['/login', '/register', '/forgot-password', '/onboarding', '/activate'];
-
 export function AuthBootstrap({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
-  const { hydrated, isAuthenticated, role } = useAppSelector((s) => s.auth);
+  const { hydrated, isAuthenticated, role, companyStatus } = useAppSelector((s) => s.auth);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +60,7 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
             companyId: membership.companyId,
             companyName: membership.companyName,
             companyInitials: companyInitials(membership.companyName),
+            companyStatus: membership.companyStatus ?? 'ACTIVE',
             membershipId: membership.id,
           }),
         );
@@ -78,20 +78,40 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    const isPublic = PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
-    if (!isAuthenticated && !isPublic) {
-      const redirect = encodeURIComponent(`${pathname}`);
-      router.replace(`/login?redirect=${redirect}`);
+    // Guests may freely browse landing + auth/marketing pages.
+    if (!isAuthenticated) {
+      if (isProtectedRoute(pathname)) {
+        const redirect = encodeURIComponent(pathname || '/');
+        router.replace(`/login?redirect=${redirect}`);
+      }
       return;
     }
 
-    if (isAuthenticated && (pathname === '/' || pathname === '/login')) {
-      router.replace(homeForRole(role));
+    // Signed-in users keep access to the public home/landing pages.
+    if (pathname === '/login') {
+      const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+      const redirect = params.get('redirect');
+      // Only auto-leave login for a protected destination (or role home).
+      if (redirect && redirect.startsWith('/') && isProtectedRoute(redirect)) {
+        router.replace(redirect);
+      } else if (!redirect || redirect === '/') {
+        router.replace(destinationForMembership({ role, companyStatus }));
+      }
+      return;
     }
-  }, [hydrated, isAuthenticated, pathname, role, router]);
 
-  if (!hydrated) {
+    if (
+      role === 'COMPANY_ADMIN' &&
+      (companyStatus === 'PENDING_REVIEW' || companyStatus === 'REJECTED') &&
+      pathname.startsWith('/admin')
+    ) {
+      router.replace('/onboarding/pending');
+    }
+  }, [hydrated, isAuthenticated, pathname, role, companyStatus, router]);
+
+  // Never block the public landing behind a loading gate.
+  if (!hydrated && !isPublicRoute(pathname)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-sm text-text-secondary">
         Loading workspace…

@@ -1,5 +1,6 @@
 import { appConfig, withNgrokSkipBrowserWarning } from '@/lib/config';
 import { refreshTokens } from '@/lib/api/auth-refresh';
+import { isPublicRoute } from '@/lib/public-routes';
 
 export class ApiError extends Error {
   constructor(
@@ -134,7 +135,9 @@ export function clearSession(): void {
 function redirectToLogin(): void {
   if (typeof window === 'undefined') return;
   const path = `${window.location.pathname}${window.location.search}`;
-  if (path.startsWith('/login') || path.startsWith('/activate')) return;
+  const pathname = window.location.pathname || '/';
+  // Expired sessions must not kick users off public marketing/auth pages.
+  if (isPublicRoute(pathname)) return;
   const redirect = encodeURIComponent(path);
   window.location.href = `/login?redirect=${redirect}`;
 }
