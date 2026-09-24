@@ -373,13 +373,14 @@ export interface AssignmentCandidateDto {
   riderName: string;
   riderPhone: string;
   plateNumber: string;
-  distanceMeters: number;
+  distanceMeters?: number;
   durationSeconds?: number;
   etaMinutes?: number;
   latitude?: number;
   longitude?: number;
   locationAgeSeconds?: number;
   recommended: boolean;
+  locationStale: boolean;
 }
 
 export interface AssignmentRecommendationsDto {
@@ -390,6 +391,8 @@ export interface AssignmentRecommendationsDto {
   pickupLongitude: number;
   recommendedRiderId?: string;
   candidates: AssignmentCandidateDto[];
+  searchRadiusMeters: number;
+  automaticLocationMaxAgeSeconds: number;
 }
 
 export function fetchAssignmentCandidates(companyId: string, tripId: string) {
@@ -413,6 +416,12 @@ export function assignTrip(
 
 export function redispatchTrip(companyId: string, tripId: string) {
   return apiFetch<TripDto>(`/companies/${companyId}/trips/${tripId}/redispatch`, {
+    method: 'POST',
+  });
+}
+
+export function assignNearestTrip(companyId: string, tripId: string) {
+  return apiFetch<TripDto>(`/companies/${companyId}/trips/${tripId}/assign-nearest`, {
     method: 'POST',
   });
 }

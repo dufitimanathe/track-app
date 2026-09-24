@@ -10,6 +10,7 @@ import { fetchLiveFleet, fleetLiveToMotorcycle } from "@/lib/api/locations";
 import { mapTrip } from "@/lib/api/mappers";
 import {
   assignTrip,
+  assignNearestTrip,
   cancelTrip,
   fetchAssignmentCandidates,
   fetchTrip,
@@ -20,7 +21,7 @@ import {
 import { calculateFare, formatKm, formatRwf, initials } from "@/lib/utils";
 import { useAppSelector } from "@/store";
 import type { Motorcycle, Trip } from "@/types";
-import { ArrowLeft, Clock, MapPin, UserPlus } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Navigation, RefreshCw, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -38,20 +39,21 @@ export default function TripDetailPage() {
     useState<AssignmentRecommendationsDto | null>(null);
   const [assigningRiderId, setAssigningRiderId] = useState<string | null>(null);
   const [redispatching, setRedispatching] = useState(false);
+  const [assigningNearest, setAssigningNearest] = useState(false);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (quiet = false) => {
     if (!companyId || !params.id) return;
-    setLoading(true);
-    setError(null);
     try {
       const dto = await fetchTrip(companyId, params.id);
+      if (!quiet) setError(null);
       setTrip(mapTrip(dto));
       setRawStatus(dto.status);
       if (dto.motorcycleId) {
         try {
           const fleet = await fetchLiveFleet(companyId);
           const live = fleet.find((f) => f.motorcycleId === dto.motorcycleId);
-          if (live) setBike(fleetLiveToMotorcycle(live));
+          setBike(live ? fleetLiveToMotorcycle(live) : null);
         } catch {
           setBike(null);
         }
@@ -68,23 +70,33 @@ export default function TripDetailPage() {
         try {
           const recs = await fetchAssignmentCandidates(companyId, params.id);
           setRecommendations(recs);
-        } catch {
+          setAssignmentError(null);
+        } catch (err) {
           setRecommendations(null);
+          setAssignmentError(err instanceof Error ? err.message : "Failed to load available riders");
         }
       } else {
         setRecommendations(null);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load trip");
-      setTrip(null);
+      if (!quiet) setTrip(null);
     } finally {
       setLoading(false);
     }
   }, [companyId, params.id]);
 
   useEffect(() => {
+    // State updates in load follow asynchronous API responses.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (assigningRiderId || assigningNearest || redispatching || cancelling) return;
+    const timer = window.setInterval(() => { void load(true); }, 15000);
+    return () => window.clearInterval(timer);
+  }, [load, assigningRiderId, assigningNearest, redispatching, cancelling]);
 
   const fare = useMemo(
     () => (trip ? calculateFare(trip.distanceKm) : null),
@@ -123,6 +135,21 @@ export default function TripDetailPage() {
     }
   }
 
+  async function onAssignNearest() {
+    if (!companyId || !trip) return;
+    setAssigningNearest(true);
+    setError(null);
+    try {
+      await assignNearestTrip(companyId, trip.id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Nearest rider assignment failed");
+      await load(true);
+    } finally {
+      setAssigningNearest(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-[1400px] mx-auto py-16 text-center text-sm text-text-muted">
@@ -156,7 +183,6 @@ export default function TripDetailPage() {
     trip.status === "searching";
   const isCompleted = trip.status === "completed";
   const showRecommendations =
-    Boolean(recommendations) &&
     (rawStatus.toUpperCase().includes("SEARCH") ||
       rawStatus.toUpperCase() === "RIDER_ASSIGNED" ||
       rawStatus.toUpperCase() === "NO_RIDER_AVAILABLE");
@@ -252,39 +278,54 @@ export default function TripDetailPage() {
       ) : null}
 
       {showRecommendations ? (
-        <Card>
-          <div className="flex items-start justify-between gap-3 mb-3">
+        <section className="border-y border-border py-4" aria-label="Driver assignment">
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
             <div>
               <h2 className="text-sm font-semibold text-text flex items-center gap-2">
                 <UserPlus className="size-4 text-primary" />
-                Recommended riders
+                Assign driver
               </h2>
               <p className="text-xs text-text-muted mt-1">
-                Auto-dispatch picks the nearest AVAILABLE rider with fresh GPS. You can also
-                assign manually below. Assigning notifies the WhatsApp customer with plate,
-                phone, and ETA.
+                {rawStatus === "NO_RIDER_AVAILABLE" ? "Automatic search finished without an assignment." :
+                  rawStatus === "RIDER_ASSIGNED" ? "Waiting for driver acceptance." : "Searching for a driver."}
               </p>
             </div>
-            <div className="flex flex-col items-end gap-2">
-              <span className="text-[11px] uppercase tracking-wide text-text-muted">
-                {recommendations?.method}
-              </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="ghost" aria-label="Refresh available drivers" title="Refresh available drivers"
+                disabled={assigningRiderId != null || assigningNearest || redispatching}
+                onClick={() => void load(true)}>
+                <RefreshCw className="size-4" />
+              </Button>
               {canRedispatch ? (
                 <Button
                   size="sm"
                   variant="secondary"
-                  disabled={redispatching}
+                  leftIcon={<RefreshCw className="size-3.5" />}
+                  disabled={redispatching || assigningNearest || assigningRiderId != null}
                   onClick={() => void onRedispatch()}
                 >
-                  {redispatching ? "Searching…" : "Auto-assign nearest"}
+                  {redispatching ? "Searching..." : "Retry automatic search"}
                 </Button>
               ) : null}
+              <Button size="sm" leftIcon={<Navigation className="size-3.5" />}
+                disabled={!recommendations?.recommendedRiderId || assigningNearest || redispatching || assigningRiderId != null}
+                onClick={() => void onAssignNearest()}>
+                {assigningNearest ? "Assigning..." : "Assign nearest available"}
+              </Button>
             </div>
           </div>
-          {!recommendations?.candidates.length ? (
+          {assignmentError ? <p role="alert" className="text-sm text-danger py-2">{assignmentError}</p> : null}
+          {recommendations ? (
+            <p className="text-xs text-text-muted mb-3">
+              Automatic search: {(recommendations.searchRadiusMeters / 1000).toFixed(1)} km radius,
+              GPS up to {recommendations.automaticLocationMaxAgeSeconds} seconds old.
+              Manual assignment: all available drivers. Distances are straight-line estimates from last-known GPS.
+            </p>
+          ) : null}
+          {recommendations && !recommendations.candidates.length ? (
             <p className="text-sm text-text-secondary py-2">
-              No available riders with recent GPS near this pickup. Set riders to Available on
-              the Riders page (with a motorcycle assigned), then try Auto-assign again.
+              No active, available drivers with an active motorcycle and no ongoing trip.
+              {" "}<Link href="/admin/riders" className="text-primary underline">View drivers</Link>
             </p>
           ) : null}
           <ul className="divide-y divide-border">
@@ -298,19 +339,25 @@ export default function TripDetailPage() {
                     #{c.rank} {c.riderName}
                     {c.recommended ? (
                       <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                        Nearest
+                        Nearest known
                       </span>
                     ) : null}
                   </p>
                   <p className="text-xs text-text-secondary mt-0.5">
                     {c.plateNumber || "No plate"} · {c.riderPhone || "No phone"} ·{" "}
-                    {c.etaMinutes != null ? `~${c.etaMinutes} min` : "ETA n/a"} ·{" "}
-                    {(c.distanceMeters / 1000).toFixed(1)} km
+                    {c.distanceMeters == null ? "Location unavailable" : `~${(c.distanceMeters / 1000).toFixed(1)} km from pickup`}
+                  </p>
+                  <p className={`text-xs mt-1 ${c.locationStale ? "text-amber-700" : "text-text-muted"}`}>
+                    {c.locationAgeSeconds == null ? "GPS age unknown" :
+                      `GPS ${formatLocationAge(c.locationAgeSeconds)} ago${c.locationStale ? " (stale)" : ""}`}
+                    {c.distanceMeters != null && recommendations && c.distanceMeters > recommendations.searchRadiusMeters
+                      ? " - Outside automatic search radius" : ""}
                   </p>
                 </div>
                 <Button
                   size="sm"
-                  disabled={assigningRiderId != null}
+                  leftIcon={<UserPlus className="size-3.5" />}
+                  disabled={assigningRiderId != null || assigningNearest || redispatching}
                   onClick={() => void onAssign(c)}
                 >
                   {assigningRiderId === c.riderId ? "Assigning…" : "Assign"}
@@ -318,12 +365,7 @@ export default function TripDetailPage() {
               </li>
             ))}
           </ul>
-          {recommendations && recommendations.candidates.length === 0 ? (
-            <p className="text-sm text-text-secondary">
-              No available riders with fresh GPS near this pickup.
-            </p>
-          ) : null}
-        </Card>
+        </section>
       ) : null}
 
       {(isLive || trip.etaMin != null) && (
@@ -439,4 +481,11 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <dd className="font-medium text-text text-right">{value}</dd>
     </div>
   );
+}
+
+function formatLocationAge(seconds: number) {
+  if (seconds < 60) return `${Math.floor(seconds)} seconds`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours`;
+  return `${Math.floor(seconds / 86400)} days`;
 }
