@@ -12,6 +12,7 @@ import {
   pickMembership,
   registerCompanyRequest,
 } from "@/lib/api/auth";
+import { uploadCompanyDocumentFile } from "@/lib/api/uploads";
 import { clearAdminDraft, loadAdminDraft } from "@/lib/onboarding-draft";
 import {
   isValidEmail,
@@ -34,9 +35,9 @@ export default function OnboardingCompanyPage() {
     registrationNumber: "",
     currency: "RWF",
     timezone: "Africa/Kigali",
-    registrationDocUrl: "",
-    directorIdUrl: "",
   });
+  const [registrationFile, setRegistrationFile] = useState<File | null>(null);
+  const [directorIdFile, setDirectorIdFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,8 +82,8 @@ export default function OnboardingCompanyPage() {
         setLoading(false);
         return;
       }
-      if (!form.registrationDocUrl.trim()) {
-        setError("Add a link to your business registration document.");
+      if (!registrationFile) {
+        setError("Upload your business registration document (PDF, image, DOC, or DOCX).");
         setLoading(false);
         return;
       }
@@ -94,18 +95,25 @@ export default function OnboardingCompanyPage() {
         ? normalizeRwandaPhone(admin.phone) ?? undefined
         : undefined;
 
-      const documents = [
+      const registrationUpload = await uploadCompanyDocumentFile(registrationFile);
+      const documents: Array<{
+        type: string;
+        title: string;
+        fileUrl: string;
+      }> = [
         {
           type: "BUSINESS_REGISTRATION",
-          title: "Business registration certificate",
-          fileUrl: form.registrationDocUrl.trim(),
+          title: registrationFile.name || "Business registration certificate",
+          fileUrl: registrationUpload.url,
         },
       ];
-      if (form.directorIdUrl.trim()) {
+
+      if (directorIdFile) {
+        const directorUpload = await uploadCompanyDocumentFile(directorIdFile);
         documents.push({
           type: "DIRECTOR_ID",
-          title: "Director / admin ID",
-          fileUrl: form.directorIdUrl.trim(),
+          title: directorIdFile.name || "Director / admin ID",
+          fileUrl: directorUpload.url,
         });
       }
 
@@ -167,7 +175,7 @@ export default function OnboardingCompanyPage() {
           Company details
         </h1>
         <p className="mt-1 text-sm text-text-secondary">
-          Register your organisation with Kampere Motari. Access opens after document validation and approval.
+          Join the Kampere Motari waitlist. Upload supporting documents so Super Admin can validate and approve your company.
         </p>
       </div>
 
@@ -213,22 +221,28 @@ export default function OnboardingCompanyPage() {
           />
         </Field>
         <Field
-          label="Business registration document URL"
-          hint="Share a Drive / Dropbox / hosted file link for Kampere Motari to validate"
+          label="Business registration document"
+          hint="PDF, image, DOC, or DOCX · max 10 MB"
         >
           <Input
-            value={form.registrationDocUrl}
-            onChange={(e) => update("registrationDocUrl", e.target.value)}
-            placeholder="https://"
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,application/pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={(e) => setRegistrationFile(e.target.files?.[0] ?? null)}
             required
           />
+          {registrationFile ? (
+            <p className="text-xs text-text-muted mt-1">{registrationFile.name}</p>
+          ) : null}
         </Field>
-        <Field label="Director ID document URL (optional)">
+        <Field label="Director ID document (optional)" hint="PDF, image, DOC, or DOCX · max 10 MB">
           <Input
-            value={form.directorIdUrl}
-            onChange={(e) => update("directorIdUrl", e.target.value)}
-            placeholder="https://"
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,application/pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={(e) => setDirectorIdFile(e.target.files?.[0] ?? null)}
           />
+          {directorIdFile ? (
+            <p className="text-xs text-text-muted mt-1">{directorIdFile.name}</p>
+          ) : null}
         </Field>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Currency">
@@ -264,7 +278,7 @@ export default function OnboardingCompanyPage() {
             Back
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? "Submitting…" : "Submit for approval"}
+            {loading ? "Uploading & submitting…" : "Submit for approval"}
           </Button>
         </div>
       </form>

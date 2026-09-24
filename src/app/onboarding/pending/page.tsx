@@ -43,12 +43,12 @@ export default function PendingApprovalPage() {
             Kampere Motari
           </p>
           <h1 className="mt-2 text-xl font-semibold tracking-tight text-text">
-            {rejected ? "Registration needs attention" : "Awaiting approval"}
+            {rejected ? "Waitlist application needs attention" : "On the waitlist"}
           </h1>
           <p className="mt-2 text-sm text-text-secondary">
             {rejected
               ? `${companyName || "Your company"} was not approved yet. Contact Kampere Motari or update your documents with support.`
-              : `${companyName || "Your company"} is registered and waiting for Kampere Motari to validate documents and approve access.`}
+              : `${companyName || "Your company"} is on the waitlist. Kampere Motari Super Admin will validate documents and approve you to work with us.`}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-surface-muted px-4 py-3 text-sm text-text-secondary">

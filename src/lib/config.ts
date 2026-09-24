@@ -35,3 +35,15 @@ export function ngrokSocketExtraHeaders(): Record<string, string> | undefined {
   if (!isNgrokUrl(appConfig.wsUrl)) return undefined;
   return { 'ngrok-skip-browser-warning': 'true' };
 }
+
+export function apiOrigin(): string {
+  return appConfig.apiUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
+}
+
+/** Turn `/uploads/…` or absolute URLs into a browser-loadable URL. */
+export function resolveUploadUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('/')) return `${apiOrigin()}${url}`;
+  return `${apiOrigin()}/${url.replace(/^\/+/, '')}`;
+}

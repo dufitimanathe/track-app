@@ -71,10 +71,10 @@ export default function RegisterPage() {
         <Card className="shadow-[var(--shadow-soft)]" padding="lg">
           <div className="mb-6">
             <h1 className="text-xl font-semibold text-text tracking-tight">
-              Create your account
+              Join the waitlist
             </h1>
             <p className="mt-1 text-sm text-text-secondary">
-              Start setting up your company transport workspace
+              Create your account, share company details, and wait for Kampere Motari approval
             </p>
           </div>
 

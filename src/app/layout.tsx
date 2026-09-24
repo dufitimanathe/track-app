@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   icons: {
-    icon: { url: "/app-logo.png", type: "image/png" },
+    icon: { url: "/app-logo.png", type: "image/png", sizes: "any" },
     shortcut: "/app-logo.png",
     apple: "/app-logo.png",
   },

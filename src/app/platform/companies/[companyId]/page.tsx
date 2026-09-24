@@ -20,6 +20,8 @@ import {
   type CompanyStatus,
   type PlatformCompanyDetail,
 } from "@/lib/api/platform";
+import { uploadCompanyDocumentFile } from "@/lib/api/uploads";
+import { DocumentPreview } from "@/components/platform/document-preview";
 import {
   isValidEmail,
   isValidRwandaPhone,
@@ -61,6 +63,8 @@ export default function PlatformCompanyDetailPage() {
     fileUrl: "",
     notes: "",
   });
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [previewDocId, setPreviewDocId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!companyId) return;
@@ -138,21 +142,39 @@ export default function PlatformCompanyDetailPage() {
 
   async function onAddDoc(e: FormEvent) {
     e.preventDefault();
-    await runAction(() =>
-      addPlatformCompanyDocument(companyId, {
+    setBusy(true);
+    setError(null);
+    try {
+      let fileUrl = docForm.fileUrl.trim();
+      if (docFile) {
+        const uploaded = await uploadCompanyDocumentFile(docFile);
+        fileUrl = uploaded.url;
+      }
+      if (!fileUrl) {
+        setError("Upload a file or paste a document URL.");
+        setBusy(false);
+        return;
+      }
+      await addPlatformCompanyDocument(companyId, {
         type: docForm.type,
-        title: docForm.title.trim(),
-        fileUrl: docForm.fileUrl.trim(),
+        title: docForm.title.trim() || docFile?.name || "Document",
+        fileUrl,
         notes: docForm.notes.trim() || undefined,
-      }),
-    );
-    setDocOpen(false);
-    setDocForm({
-      type: "BUSINESS_REGISTRATION",
-      title: "",
-      fileUrl: "",
-      notes: "",
-    });
+      });
+      setDocOpen(false);
+      setDocFile(null);
+      setDocForm({
+        type: "BUSINESS_REGISTRATION",
+        title: "",
+        fileUrl: "",
+        notes: "",
+      });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add document");
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (loading) {
@@ -280,14 +302,19 @@ export default function PlatformCompanyDetailPage() {
                     />
                   </div>
                   <p className="mt-1 text-xs text-text-muted">{doc.type.replaceAll("_", " ")}</p>
-                  <a
-                    href={doc.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-block text-sm text-primary hover:underline"
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="mt-2"
+                    onClick={() =>
+                      setPreviewDocId((id) => (id === doc.id ? null : doc.id))
+                    }
                   >
-                    Open document
-                  </a>
+                    {previewDocId === doc.id ? "Hide preview" : "Preview file"}
+                  </Button>
+                  {previewDocId === doc.id ? (
+                    <DocumentPreview fileUrl={doc.fileUrl} title={doc.title} />
+                  ) : null}
                   {doc.status === "SUBMITTED" && (
                     <div className="mt-3 flex gap-2">
                       <Button
@@ -482,11 +509,27 @@ export default function PlatformCompanyDetailPage() {
               required
             />
           </Field>
-          <Field label="Document URL" hint="Link to Drive, Dropbox, or hosted file">
+          <Field label="Upload file" hint="PDF, image, DOC, or DOCX · max 10 MB">
+            <Input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,application/pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                setDocFile(file);
+                if (file && !docForm.title.trim()) {
+                  setDocForm((p) => ({ ...p, title: file.name }));
+                }
+              }}
+            />
+            {docFile ? (
+              <p className="mt-1 text-xs text-text-muted">{docFile.name}</p>
+            ) : null}
+          </Field>
+          <Field label="Or paste URL (optional)">
             <Input
               value={docForm.fileUrl}
               onChange={(e) => setDocForm((p) => ({ ...p, fileUrl: e.target.value }))}
-              required
+              placeholder="/uploads/… or https://…"
             />
           </Field>
           <Field label="Notes">

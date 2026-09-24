@@ -20,7 +20,7 @@ const services = [
 
 const questions = [
   { question: "How do I request a trip as an employee?", answer: "First, ask your company’s transport coordinator to confirm that you’re enrolled and that your phone number is registered. Send your pickup, destination, and preferred time to the company’s designated booking WhatsApp number. Review the trip details and confirm to submit it for supervisor approval." },
-  { question: "Can I book if my company is not registered?", answer: "Employee bookings are linked to a participating company. If your company has not joined yet, ask your transport coordinator to explore company registration. Creating a company account is for the person responsible for setting up your organisation, rather than individual employees." },
+  { question: "Can I book if my company is not registered?", answer: "Employee bookings are linked to a participating company. If your company has not joined yet, ask your transport coordinator to join the Kampere Motari waitlist. Waitlist applications are reviewed by our Super Admin before a company can work with us." },
   { question: "Who approves my journey?", answer: "Your company’s authorised supervisor or transport team reviews the request. Submitting a request does not mean a rider has been assigned. Wait for approval and the booking updates before you travel." },
   { question: "Who is the web dashboard for?", answer: "The dashboard gives administrators, supervisors, accountants, and riders access to the tools assigned to their role. Employees can use their company’s WhatsApp booking channel to request transport." },
 ];
@@ -123,12 +123,12 @@ export function LandingPage({ email, whatsapp }: { email?: string; whatsapp?: st
           <Brand />
           <nav className={styles.desktopNav} aria-label="Main navigation">{navigation.map(([label, href]) => <a key={href} href={href}>{label}</a>)}</nav>
           <div className={styles.headerActions}>
-            <Link className={styles.signIn} href="/register">Register company<ArrowUpRight size={15} aria-hidden="true" /></Link>
+            <Link className={styles.signIn} href="/register">Join waitlist<ArrowUpRight size={15} aria-hidden="true" /></Link>
             <Link className={styles.signIn} href={workspaceHref}>{workspaceLabel}<ArrowUpRight size={15} aria-hidden="true" /></Link>
             <button type="button" className={styles.menuButton} aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={22} /> : <Menu size={22} />}</button>
           </div>
         </div>
-        {menuOpen && <nav id="mobile-navigation" className={styles.mobileNav} aria-label="Mobile navigation">{navigation.map(([label, href]) => <a key={href} href={href} onClick={() => setMenuOpen(false)}>{label}</a>)}<a href="#employees" onClick={() => setMenuOpen(false)}>For employees</a><Link href="/register" onClick={() => setMenuOpen(false)}>Register company</Link>{signedIn && role === "PLATFORM_ADMIN" ? <Link href="/platform" onClick={() => setMenuOpen(false)}>Super Admin</Link> : null}</nav>}
+        {menuOpen && <nav id="mobile-navigation" className={styles.mobileNav} aria-label="Mobile navigation">{navigation.map(([label, href]) => <a key={href} href={href} onClick={() => setMenuOpen(false)}>{label}</a>)}<a href="#employees" onClick={() => setMenuOpen(false)}>For employees</a><Link href="/register" onClick={() => setMenuOpen(false)}>Join waitlist</Link>{signedIn && role === "PLATFORM_ADMIN" ? <Link href="/platform" onClick={() => setMenuOpen(false)}>Super Admin</Link> : null}</nav>}
       </header>
 
       <main id="main">
@@ -137,7 +137,7 @@ export function LandingPage({ email, whatsapp }: { email?: string; whatsapp?: st
             <p className={styles.eyebrow}><span className={styles.smallDot} /> MADE FOR THE WAY YOUR TEAM MOVES</p>
             <h1 id="hero-title">Good journeys.<br />Better <span>workdays.</span></h1>
             <p className={styles.heroDescription}>Your people have places to be. We bring company transport, trip requests, and fleet operations together, so getting there feels simple.</p>
-            <div className={styles.actions}><Link href="/register" className={styles.primaryButton}>Register your company <ArrowUpRight size={18} aria-hidden="true" /></Link><a href="#employees" className={styles.textButton}>How employees book <ArrowRight size={17} aria-hidden="true" /></a></div>
+            <div className={styles.actions}><Link href="/register" className={styles.primaryButton}>Join waitlist <ArrowUpRight size={18} aria-hidden="true" /></Link><a href="#employees" className={styles.textButton}>How employees book <ArrowRight size={17} aria-hidden="true" /></a></div>
             <div className={styles.heroFootnote}><span>Rooted in Rwanda.</span><span>Built around your people.</span></div>
           </div>
           <JourneyPreview />
@@ -179,15 +179,15 @@ export function LandingPage({ email, whatsapp }: { email?: string; whatsapp?: st
         <section id="partners" className={`${styles.container} ${styles.partners} ${styles.section}`} aria-labelledby="partners-title">
           <div className={styles.sectionHeading} data-reveal><div><p className={styles.eyebrow}>04 / BETTER TOGETHER</p><h2 id="partners-title">Built for companies.<br /><span>Powered by partnership.</span></h2></div><p>We connect employers, transport teams, and riders around a shared goal: making work journeys easier to organise.</p></div>
           <div className={styles.partnerGrid} data-reveal>
-            <article><span>THE COMPANIES WE WORK WITH</span><h3>Teams with places to be.</h3><p>Organisations like banks and media houses enrol employees under Kampere Motari. Register your company, submit documents, and wait for approval.</p><div className={styles.sectorTags}><span>Office teams</span><span>Field operations</span><span>Multi-site organisations</span></div><Link href="/register" className={styles.textButton}>Register your company <ArrowUpRight size={17} aria-hidden="true" /></Link></article>
-            <article><span>KAMPERE MOTARI SUPER ADMIN</span><h3>Approve and manage every client.</h3><p>Platform admins validate registration documents, approve companies, and manage each company’s admins from one workspace.</p><div className={styles.sectorTags}><span>Document validation</span><span>Company approval</span><span>Admin management</span></div><Link href={signedIn && role === "PLATFORM_ADMIN" ? "/platform" : "/login"} className={styles.textButton}>{signedIn && role === "PLATFORM_ADMIN" ? "Open Super Admin" : "Sign in as Super Admin"} <ArrowUpRight size={17} aria-hidden="true" /></Link></article>
+            <article><span>THE COMPANIES WE WORK WITH</span><h3>Teams with places to be.</h3><p>Organisations like banks and media houses join our waitlist, submit documents, and wait for Super Admin approval before working with Kampere Motari.</p><div className={styles.sectorTags}><span>Office teams</span><span>Field operations</span><span>Multi-site organisations</span></div><Link href="/register" className={styles.textButton}>Join waitlist <ArrowUpRight size={17} aria-hidden="true" /></Link></article>
+            <article><span>KAMPERE MOTARI SUPER ADMIN</span><h3>Approve and manage every client.</h3><p>Platform admins validate waitlist documents, approve companies to work with us, and can also register a company directly when needed.</p><div className={styles.sectorTags}><span>Document validation</span><span>Company approval</span><span>Admin management</span></div><Link href={signedIn && role === "PLATFORM_ADMIN" ? "/platform" : "/login"} className={styles.textButton}>{signedIn && role === "PLATFORM_ADMIN" ? "Open Super Admin" : "Sign in as Super Admin"} <ArrowUpRight size={17} aria-hidden="true" /></Link></article>
           </div>
         </section>
 
         <section className={styles.faqSection} aria-labelledby="faq-title"><div className={`${styles.container} ${styles.faqLayout} ${styles.section}`}><div data-reveal><p className={styles.eyebrow}>A LITTLE MORE CLARITY</p><h2 id="faq-title">Before you<br /><span>get going.</span></h2><p>Good journeys start with clear answers.</p></div><div className={styles.faqList} data-reveal>{questions.map((item) => <details key={item.question}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div></div></section>
 
         <section id="contact" className={`${styles.container} ${styles.section}`} aria-labelledby="contact-title"><div className={styles.contactPanel} data-reveal>
-          <div><p className={styles.eyebrow}>05 / LET’S GET MOVING</p><h2 id="contact-title">A better workday<br />starts along the way.</h2><p>Bring your team’s journeys together with Kampere Motari.</p><div className={styles.actions}><Link href="/register" className={styles.whiteButton}>Get your company started <ArrowUpRight size={18} aria-hidden="true" /></Link><Link href={workspaceHref} className={styles.contactSignIn}>{signedIn ? workspaceLabel : "Already part of the team? Sign in"}<ArrowRight size={17} aria-hidden="true" /></Link></div></div>
+          <div><p className={styles.eyebrow}>05 / LET’S GET MOVING</p><h2 id="contact-title">A better workday<br />starts along the way.</h2><p>Bring your team’s journeys together with Kampere Motari.</p><div className={styles.actions}><Link href="/register" className={styles.whiteButton}>Join waitlist <ArrowUpRight size={18} aria-hidden="true" /></Link><Link href={workspaceHref} className={styles.contactSignIn}>{signedIn ? workspaceLabel : "Already part of the team? Sign in"}<ArrowRight size={17} aria-hidden="true" /></Link></div></div>
           <div className={styles.contactDetails}><span>GET IN TOUCH</span><a href="tel:+250782027429">+250 782 027 429 <ArrowUpRight size={17} aria-hidden="true" /></a>{email && <a href={`mailto:${email}`}>{email}<ArrowUpRight size={15} aria-hidden="true" /></a>}<p>For partnerships, company transport, or help getting started, give us a call.</p><a href="#employees">Employee booking guide <ArrowUpRight size={15} aria-hidden="true" /></a><small>KAMPERE MOTARI LTD</small></div>
         </div></section>
       </main>
