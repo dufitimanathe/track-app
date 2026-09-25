@@ -15,6 +15,8 @@ type Mode = "choose" | "supervisor" | "rider";
 export default function OnboardingTeamPage() {
   const router = useRouter();
   const companyId = useAppSelector((s) => s.auth.companyId);
+  const companyType = useAppSelector((s) => s.auth.companyType);
+  const isClient = companyType === "CLIENT";
   const [mode, setMode] = useState<Mode>("choose");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -88,7 +90,7 @@ export default function OnboardingTeamPage() {
     }
   }
 
-  if (mode === "supervisor" || mode === "rider") {
+  if (mode === "supervisor" || (mode === "rider" && !isClient)) {
     const title = mode === "supervisor" ? "Invite supervisor" : "Add rider";
     return (
       <Card className="shadow-[var(--shadow-soft)]" padding="lg">
@@ -169,7 +171,9 @@ export default function OnboardingTeamPage() {
           Build your team
         </h1>
         <p className="mt-1 text-sm text-text-secondary">
-          Invite a supervisor, add a rider, or skip and finish setup.
+          {isClient
+            ? "Invite supervisors or employees who will request and approve trips. Kampere Motari provides the riders."
+            : "Invite a supervisor, add a rider, or skip and finish setup."}
         </p>
       </div>
 
@@ -177,7 +181,7 @@ export default function OnboardingTeamPage() {
         <p className="text-sm text-danger bg-danger-soft rounded-[8px] px-3 py-2">{error}</p>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className={`grid gap-3 ${isClient ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
         <button
           type="button"
           onClick={() => setMode("supervisor")}
@@ -188,23 +192,25 @@ export default function OnboardingTeamPage() {
           </div>
           <p className="mt-3 text-sm font-semibold text-text">Invite supervisor</p>
           <p className="mt-1 text-xs text-text-secondary">
-            Approve requests and manage dispatch
+            Approve requests for your employees
           </p>
         </button>
 
-        <button
-          type="button"
-          onClick={() => setMode("rider")}
-          className="rounded-[12px] border border-border bg-surface p-4 text-left shadow-[var(--shadow-soft)] hover:border-primary hover:bg-primary-soft/40 transition-colors"
-        >
-          <div className="rounded-[10px] bg-success-soft p-2 text-success w-fit">
-            <Users className="size-5" />
-          </div>
-          <p className="mt-3 text-sm font-semibold text-text">Add rider</p>
-          <p className="mt-1 text-xs text-text-secondary">
-            Assign to a motorcycle after invite
-          </p>
-        </button>
+        {!isClient ? (
+          <button
+            type="button"
+            onClick={() => setMode("rider")}
+            className="rounded-[12px] border border-border bg-surface p-4 text-left shadow-[var(--shadow-soft)] hover:border-primary hover:bg-primary-soft/40 transition-colors"
+          >
+            <div className="rounded-[10px] bg-success-soft p-2 text-success w-fit">
+              <Users className="size-5" />
+            </div>
+            <p className="mt-3 text-sm font-semibold text-text">Add rider</p>
+            <p className="mt-1 text-xs text-text-secondary">
+              Assign to a motorcycle after invite
+            </p>
+          </button>
+        ) : null}
 
         <button
           type="button"
@@ -226,7 +232,9 @@ export default function OnboardingTeamPage() {
         <Button
           type="button"
           variant="secondary"
-          onClick={() => router.push("/onboarding/fleet")}
+          onClick={() =>
+            router.push(isClient ? "/onboarding/operations" : "/onboarding/fleet")
+          }
         >
           Back
         </Button>

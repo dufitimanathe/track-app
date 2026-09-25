@@ -7,17 +7,28 @@ import { createMotorcycle, updateOnboarding } from "@/lib/api/resources";
 import { useAppSelector } from "@/store";
 import { Bike, FileUp, SkipForward } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function OnboardingFleetPage() {
   const router = useRouter();
   const companyId = useAppSelector((s) => s.auth.companyId);
+  const companyType = useAppSelector((s) => s.auth.companyType);
   const [mode, setMode] = useState<"choose" | "add">("choose");
   const [plate, setPlate] = useState("");
   const [fleetNumber, setFleetNumber] = useState("");
   const [brand, setBrand] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (companyType === "CLIENT" && companyId) {
+      void updateOnboarding(companyId, { fleetAdded: true })
+        .catch(() => undefined)
+        .finally(() => {
+          router.replace("/onboarding/team");
+        });
+    }
+  }, [companyType, companyId, router]);
 
   async function finish(markFleet: boolean) {
     if (!companyId) {
@@ -58,48 +69,40 @@ export default function OnboardingFleetPage() {
     }
   }
 
+  if (companyType === "CLIENT") {
+    return (
+      <Card className="shadow-[var(--shadow-soft)]" padding="lg">
+        <p className="text-sm text-text-secondary">Skipping fleet setup…</p>
+      </Card>
+    );
+  }
+
   if (mode === "add") {
     return (
       <Card className="shadow-[var(--shadow-soft)]" padding="lg">
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-text tracking-tight">
-            Add motorcycle
-          </h1>
+          <h1 className="text-xl font-semibold text-text tracking-tight">Add a motorcycle</h1>
           <p className="mt-1 text-sm text-text-secondary">
-            You can add more units after onboarding.
+            You can add more bikes later from Fleet.
           </p>
         </div>
-
         <form className="space-y-4" onSubmit={saveMotorcycle}>
           <Field label="Plate number">
-            <Input
-              value={plate}
-              onChange={(e) => setPlate(e.target.value)}
-              placeholder="RAE 428C"
-              required
-            />
+            <Input value={plate} onChange={(e) => setPlate(e.target.value)} required />
           </Field>
-          <Field label="Fleet number">
-            <Input
-              value={fleetNumber}
-              onChange={(e) => setFleetNumber(e.target.value)}
-              placeholder="VT-014"
-            />
+          <Field label="Fleet number" hint="Optional internal code">
+            <Input value={fleetNumber} onChange={(e) => setFleetNumber(e.target.value)} />
           </Field>
-          <Field label="Brand / model">
+          <Field label="Brand / model" hint="Optional">
             <Input
               value={brand}
               onChange={(e) => setBrand(e.target.value)}
-              placeholder="TVS Apache 160"
+              placeholder="Honda Ace"
             />
           </Field>
-
           {error ? (
-            <p className="text-sm text-danger bg-danger-soft rounded-[8px] px-3 py-2">
-              {error}
-            </p>
+            <p className="text-sm text-danger bg-danger-soft rounded-[8px] px-3 py-2">{error}</p>
           ) : null}
-
           <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2 sm:justify-end">
             <Button type="button" variant="secondary" onClick={() => setMode("choose")}>
               Back
@@ -116,72 +119,38 @@ export default function OnboardingFleetPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-text tracking-tight">
-          Seed your fleet
-        </h1>
+        <h1 className="text-xl font-semibold text-text tracking-tight">Fleet setup</h1>
         <p className="mt-1 text-sm text-text-secondary">
-          Add at least one motorcycle, or skip for now.
+          Add your first motorcycle now, or skip and finish later.
         </p>
       </div>
-
       {error ? (
         <p className="text-sm text-danger bg-danger-soft rounded-[8px] px-3 py-2">{error}</p>
       ) : null}
-
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <button
           type="button"
           onClick={() => setMode("add")}
-          className="rounded-[12px] border border-border bg-surface p-4 text-left shadow-[var(--shadow-soft)] hover:border-primary hover:bg-primary-soft/40 transition-colors"
+          className="rounded-[12px] border border-border bg-surface p-5 text-left hover:border-primary/40 transition-colors"
         >
-          <div className="rounded-[10px] bg-primary-soft p-2 text-primary w-fit">
-            <Bike className="size-5" />
-          </div>
-          <p className="mt-3 text-sm font-semibold text-text">Add motorcycle</p>
-          <p className="mt-1 text-xs text-text-secondary">
-            Enter plate and fleet details manually
-          </p>
+          <Bike className="size-5 text-primary mb-3" />
+          <p className="font-semibold text-text">Add motorcycle</p>
+          <p className="text-sm text-text-secondary mt-1">Plate, fleet number, brand</p>
         </button>
-
         <button
           type="button"
-          disabled={loading}
           onClick={() => void finish(true)}
-          className="rounded-[12px] border border-border bg-surface p-4 text-left shadow-[var(--shadow-soft)] hover:border-primary hover:bg-primary-soft/40 transition-colors"
-        >
-          <div className="rounded-[10px] bg-surface-muted p-2 text-text-secondary w-fit">
-            <FileUp className="size-5" />
-          </div>
-          <p className="mt-3 text-sm font-semibold text-text">Import later</p>
-          <p className="mt-1 text-xs text-text-secondary">
-            Mark fleet step done and continue
-          </p>
-        </button>
-
-        <button
-          type="button"
           disabled={loading}
-          onClick={() => void finish(false)}
-          className="rounded-[12px] border border-border bg-surface p-4 text-left shadow-[var(--shadow-soft)] hover:border-border-strong transition-colors"
+          className="rounded-[12px] border border-border bg-surface p-5 text-left hover:border-primary/40 transition-colors"
         >
-          <div className="rounded-[10px] bg-surface-muted p-2 text-text-secondary w-fit">
-            <SkipForward className="size-5" />
-          </div>
-          <p className="mt-3 text-sm font-semibold text-text">Skip</p>
-          <p className="mt-1 text-xs text-text-secondary">
-            Set up fleet later from the admin console
-          </p>
+          <SkipForward className="size-5 text-text-muted mb-3" />
+          <p className="font-semibold text-text">Skip for now</p>
+          <p className="text-sm text-text-secondary mt-1">Mark fleet step complete</p>
         </button>
       </div>
-
-      <div className="flex justify-start pt-2">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => router.push("/onboarding/operations")}
-        >
-          Back
-        </Button>
+      <div className="rounded-[12px] border border-dashed border-border p-4 text-sm text-text-secondary flex gap-2">
+        <FileUp className="size-4 shrink-0 mt-0.5" />
+        Bulk CSV import can come later from the Fleet page.
       </div>
     </div>
   );

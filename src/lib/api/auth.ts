@@ -20,6 +20,7 @@ export interface Membership {
   companyName: string;
   companySlug: string;
   companyStatus?: string;
+  companyType?: 'OPERATOR' | 'CLIENT';
   role: UserRole;
   status: string;
   joinedAt: string;
@@ -37,6 +38,7 @@ export interface AuthResponse extends AuthTokens {
 export interface MeResponse {
   user: BackendUser;
   memberships: Membership[];
+  operatorCompanyId?: string | null;
 }
 
 export async function registerCompanyRequest(input: {

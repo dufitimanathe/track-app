@@ -1,12 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useAppSelector } from "@/store";
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-const STEPS = [
+const OPERATOR_STEPS = [
   { id: "account", label: "Account", href: "/register" },
   { id: "company", label: "Company", href: "/onboarding/company" },
   { id: "operations", label: "Operations", href: "/onboarding/operations" },
@@ -15,10 +16,18 @@ const STEPS = [
   { id: "finish", label: "Finish", href: "/onboarding/complete" },
 ] as const;
 
-function stepIndex(pathname: string): number {
-  if (pathname.includes("/onboarding/complete")) return 5;
-  if (pathname.includes("/onboarding/team")) return 4;
-  if (pathname.includes("/onboarding/fleet")) return 3;
+const CLIENT_STEPS = [
+  { id: "account", label: "Account", href: "/register" },
+  { id: "company", label: "Company", href: "/onboarding/company" },
+  { id: "operations", label: "Operations", href: "/onboarding/operations" },
+  { id: "team", label: "Team", href: "/onboarding/team" },
+  { id: "finish", label: "Finish", href: "/onboarding/complete" },
+] as const;
+
+function stepIndex(pathname: string, client: boolean): number {
+  if (pathname.includes("/onboarding/complete")) return client ? 4 : 5;
+  if (pathname.includes("/onboarding/team")) return client ? 3 : 4;
+  if (pathname.includes("/onboarding/fleet")) return client ? 3 : 3;
   if (pathname.includes("/onboarding/operations")) return 2;
   if (pathname.includes("/onboarding/company")) return 1;
   return 0;
@@ -26,7 +35,10 @@ function stepIndex(pathname: string): number {
 
 export default function OnboardingLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const current = stepIndex(pathname);
+  const companyType = useAppSelector((s) => s.auth.companyType);
+  const isClient = companyType === "CLIENT";
+  const STEPS = isClient ? CLIENT_STEPS : OPERATOR_STEPS;
+  const current = stepIndex(pathname, isClient);
   const progress = ((current + 1) / STEPS.length) * 100;
 
   return (

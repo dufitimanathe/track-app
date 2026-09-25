@@ -261,4 +261,7 @@ export interface DashboardStats {
   completedToday: number;
   distanceTodayKm: number;
   transportCostToday: number;
+  employeesCount?: number;
+  billingTotal?: number;
+  companyType?: 'OPERATOR' | 'CLIENT';
 }

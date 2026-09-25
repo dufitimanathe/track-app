@@ -13,7 +13,7 @@ import {
   getStoredCompanyId,
   setStoredCompanyId,
 } from '@/lib/api/client';
-import { destinationForMembership } from '@/lib/navigation';
+import { destinationForMembership, homeForRole, isClientBlockedPath } from '@/lib/navigation';
 import { isProtectedRoute, isPublicRoute } from '@/lib/public-routes';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { clearSession, setHydrated, setSession } from '@/store/slices/auth-slice';
@@ -24,7 +24,7 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
-  const { hydrated, isAuthenticated, role, companyStatus } = useAppSelector((s) => s.auth);
+  const { hydrated, isAuthenticated, role, companyStatus, companyType } = useAppSelector((s) => s.auth);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +61,8 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
             companyName: membership.companyName,
             companyInitials: companyInitials(membership.companyName),
             companyStatus: membership.companyStatus ?? 'ACTIVE',
+            companyType: membership.companyType ?? 'CLIENT',
+            operatorCompanyId: me.operatorCompanyId ?? null,
             membershipId: membership.id,
           }),
         );
@@ -107,8 +109,13 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
       pathname.startsWith('/admin')
     ) {
       router.replace('/onboarding/pending');
+      return;
     }
-  }, [hydrated, isAuthenticated, pathname, role, companyStatus, router]);
+
+    if (isClientBlockedPath(pathname, companyType)) {
+      router.replace(homeForRole(role));
+    }
+  }, [hydrated, isAuthenticated, pathname, role, companyStatus, companyType, router]);
 
   // Never block the public landing behind a loading gate.
   if (!hydrated && !isPublicRoute(pathname)) {

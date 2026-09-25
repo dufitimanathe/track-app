@@ -321,7 +321,7 @@ export default function TripDetailPage() {
                 {assigningNearest
                   ? "Assigning nearest available driver…"
                   : rawStatus === "RIDER_ASSIGNED"
-                    ? "Waiting for driver acceptance."
+                    ? "Rider assigned — heading to pickup."
                     : rawStatus === "NO_RIDER_AVAILABLE"
                       ? "No driver with a known location yet — pick one below or retry."
                       : "Nearest available driver is assigned automatically."}

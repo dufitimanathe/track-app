@@ -97,6 +97,7 @@ function SelectorGrid({
 export default function OnboardingOperationsPage() {
   const router = useRouter();
   const companyId = useAppSelector((s) => s.auth.companyId);
+  const companyType = useAppSelector((s) => s.auth.companyType);
   const [fleetSize, setFleetSize] = useState("31-75");
   const [riders, setRiders] = useState("26-50");
   const [tracking, setTracking] = useState("phone");
@@ -118,7 +119,8 @@ export default function OnboardingOperationsPage() {
       void tracking;
       void approval;
       await updateOnboarding(companyId, { operationalSettingsCompleted: true });
-      router.push("/onboarding/fleet");
+      // Client companies skip fleet — Kampere Motari operates the riders.
+      router.push(companyType === "CLIENT" ? "/onboarding/team" : "/onboarding/fleet");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
     } finally {

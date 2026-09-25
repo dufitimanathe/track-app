@@ -102,6 +102,9 @@ export function mapDashboard(dto: DashboardDto): DashboardStats {
     completedToday: dto.today.tripsCompleted,
     distanceTodayKm: 0,
     transportCostToday: Number(dto.today.revenue) || 0,
+    employeesCount: dto.employeesCount,
+    billingTotal: Number(dto.billingTotal) || 0,
+    companyType: dto.companyType,
   };
 }
 

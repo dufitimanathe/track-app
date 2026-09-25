@@ -61,6 +61,8 @@ function LoginForm() {
           companyName: membership.companyName,
           companyInitials: companyInitials(membership.companyName),
           companyStatus: membership.companyStatus ?? "ACTIVE",
+          companyType: membership.companyType ?? "CLIENT",
+          operatorCompanyId: me.operatorCompanyId ?? null,
           membershipId: membership.id,
         }),
       );

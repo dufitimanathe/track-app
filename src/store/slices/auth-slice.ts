@@ -1,4 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { CompanyType } from '@/lib/navigation';
 import type { UserRole } from '@/types';
 
 export interface AuthState {
@@ -13,6 +14,8 @@ export interface AuthState {
   companyName: string;
   companyInitials: string;
   companyStatus: string;
+  companyType: CompanyType;
+  operatorCompanyId: string | null;
   membershipId: string;
 }
 
@@ -28,6 +31,8 @@ const initialState: AuthState = {
   companyName: '',
   companyInitials: '',
   companyStatus: 'ACTIVE',
+  companyType: 'CLIENT',
+  operatorCompanyId: null,
   membershipId: '',
 };
 
@@ -50,6 +55,8 @@ const authSlice = createSlice({
         companyName: string;
         companyInitials: string;
         companyStatus?: string;
+        companyType?: CompanyType;
+        operatorCompanyId?: string | null;
         membershipId: string;
       }>,
     ) {
@@ -58,6 +65,8 @@ const authSlice = createSlice({
       Object.assign(state, {
         ...action.payload,
         companyStatus: action.payload.companyStatus ?? 'ACTIVE',
+        companyType: action.payload.companyType ?? 'CLIENT',
+        operatorCompanyId: action.payload.operatorCompanyId ?? null,
       });
     },
     clearSession(state) {

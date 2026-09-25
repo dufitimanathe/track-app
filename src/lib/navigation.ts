@@ -22,6 +22,8 @@ import {
   Wallet,
 } from "lucide-react";
 
+export type CompanyType = "OPERATOR" | "CLIENT";
+
 export interface NavItem {
   label: string;
   href: string;
@@ -48,6 +50,19 @@ export const adminNav: NavItem[] = [
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
+/** CLIENT company admin — no rider/fleet/live-ops; billing/invoices are read-oriented. */
+export const clientAdminNav: NavItem[] = [
+  { label: "Overview", href: "/admin", icon: LayoutDashboard },
+  { label: "Requests", href: "/admin/requests", icon: ClipboardList, badge: "pending" },
+  { label: "Trips", href: "/admin/trips", icon: Activity },
+  { label: "Employees", href: "/admin/employees", icon: Building2 },
+  { label: "Supervisors", href: "/admin/supervisors", icon: Shield },
+  { label: "Billing", href: "/admin/billing", icon: Wallet },
+  { label: "Invoices", href: "/admin/invoices", icon: Receipt },
+  { label: "Notifications", href: "/admin/notifications", icon: Bell },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
+];
+
 export const supervisorNav: NavItem[] = [
   { label: "Overview", href: "/supervisor", icon: LayoutDashboard },
   { label: "Requests", href: "/supervisor/requests", icon: ClipboardList, badge: "pending" },
@@ -57,6 +72,17 @@ export const supervisorNav: NavItem[] = [
   { label: "Fleet View", href: "/supervisor/fleet", icon: Bike },
   { label: "Notifications", href: "/supervisor/notifications", icon: Bell },
   { label: "Reports", href: "/supervisor/reports", icon: FileText },
+  { label: "Profile", href: "/supervisor/profile", icon: UserCircle },
+];
+
+export const clientSupervisorNav: NavItem[] = [
+  { label: "Overview", href: "/supervisor", icon: LayoutDashboard },
+  { label: "Requests", href: "/supervisor/requests", icon: ClipboardList, badge: "pending" },
+  { label: "Trips", href: "/supervisor/trips", icon: Activity },
+  { label: "Employees", href: "/supervisor/employees", icon: Building2 },
+  { label: "Billing", href: "/supervisor/billing", icon: Wallet },
+  { label: "Invoices", href: "/supervisor/invoices", icon: Receipt },
+  { label: "Notifications", href: "/supervisor/notifications", icon: Bell },
   { label: "Profile", href: "/supervisor/profile", icon: UserCircle },
 ];
 
@@ -86,12 +112,33 @@ export const platformNav: NavItem[] = [
   { label: "Register company", href: "/platform/companies/new", icon: ClipboardList },
 ];
 
-export function navForRole(role: UserRole): NavItem[] {
+const CLIENT_BLOCKED_PATH_PREFIXES = [
+  "/admin/live",
+  "/admin/tracking",
+  "/admin/fleet",
+  "/admin/riders",
+  "/admin/incidents",
+  "/supervisor/active-trips",
+  "/supervisor/fleet",
+];
+
+export function navForRole(role: UserRole, companyType: CompanyType = "OPERATOR"): NavItem[] {
   if (role === "PLATFORM_ADMIN") return platformNav;
-  if (role === "SUPERVISOR") return supervisorNav;
   if (role === "ACCOUNTANT") return accountantNav;
   if (role === "RIDER") return riderNav;
+  if (companyType === "CLIENT") {
+    if (role === "SUPERVISOR") return clientSupervisorNav;
+    return clientAdminNav;
+  }
+  if (role === "SUPERVISOR") return supervisorNav;
   return adminNav;
+}
+
+export function isClientBlockedPath(pathname: string, companyType?: CompanyType | null): boolean {
+  if (companyType !== "CLIENT") return false;
+  return CLIENT_BLOCKED_PATH_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 }
 
 export function homeForRole(role: UserRole): string {

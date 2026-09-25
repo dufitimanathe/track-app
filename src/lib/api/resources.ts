@@ -1,6 +1,7 @@
 import { apiFetch, apiList, type ListQuery, type PaginatedResult } from '@/lib/api/client';
 
 export interface DashboardDto {
+  companyType?: 'OPERATOR' | 'CLIENT';
   activeTrips: number;
   pendingRequests: number;
   availableRiders: number;
@@ -8,6 +9,8 @@ export interface DashboardDto {
   activeMotorcycles: number;
   openIncidents: number;
   membersCount: number;
+  employeesCount?: number;
+  billingTotal?: string;
   fleet: {
     totalMotorcycles: number;
     activeMotorcycles: number;
@@ -231,6 +234,8 @@ export interface CompanyDto {
   id: string;
   name: string;
   slug?: string;
+  companyType?: 'OPERATOR' | 'CLIENT';
+  status?: string;
   email?: string | null;
   phone?: string | null;
   address?: string | null;
@@ -618,6 +623,11 @@ export function generateInvoice(
 
 export function fetchCompany(companyId: string) {
   return apiFetch<CompanyDto>(`/companies/${companyId}`);
+}
+
+/** Kampere operator: list CLIENT companies for billing / invoice proof packs. */
+export function fetchOperatorClientCompanies() {
+  return apiFetch<CompanyDto[]>('/companies/operator/clients');
 }
 
 export function updateCompany(

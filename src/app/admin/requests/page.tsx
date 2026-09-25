@@ -29,6 +29,8 @@ const TAB_TO_API: Record<RequestTab, string | undefined> = {
 export default function RequestsPage() {
   const dispatch = useAppDispatch();
   const companyId = useAppSelector((s) => s.auth.companyId);
+  const role = useAppSelector((s) => s.auth.role);
+  const canApprove = role === "SUPERVISOR";
   const selectedId = useAppSelector((s) => s.ui.selectedRequestId);
   const [tab, setTab] = useState<RequestTab>("pending");
   const [query, setQuery] = useState("");
@@ -102,7 +104,11 @@ export default function RequestsPage() {
     <div className="space-y-4 sm:space-y-5 max-w-[1400px] mx-auto">
       <PageHeader
         title="Transport Requests"
-        description="Review and approve employee transport requests"
+        description={
+          canApprove
+            ? "Review and approve employee transport requests"
+            : "View employee transport requests — supervisors approve trips"
+        }
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -197,7 +203,7 @@ export default function RequestsPage() {
                 Est. fare {formatRwf(fare.total)} · {formatKm(selected.estimatedDistanceKm)}
               </p>
             ) : null}
-            {selected.status === "pending" ? (
+            {selected.status === "pending" && canApprove ? (
               <div className="flex gap-2">
                 <Button
                   variant="secondary"
@@ -215,6 +221,10 @@ export default function RequestsPage() {
                   Approve
                 </Button>
               </div>
+            ) : selected.status === "pending" && !canApprove ? (
+              <p className="text-sm text-text-secondary">
+                Only a company supervisor can approve or reject this request.
+              </p>
             ) : null}
           </div>
         ) : null}

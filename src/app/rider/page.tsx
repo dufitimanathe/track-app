@@ -3,12 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { RiderAvailabilityCard } from "@/components/rider/availability-card";
 import { Card, MetricCard } from "@/components/ui/card";
-import { Modal } from "@/components/ui/overlay";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { mapAvailability, mapRiderMeMotorcycle, mapTrip } from "@/lib/api/mappers";
 import {
-  acceptTrip,
-  declineTrip,
   fetchRiderMe,
   fetchTrips,
   type RiderMeDto,
@@ -31,7 +28,6 @@ export default function RiderHomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [assignmentOpen, setAssignmentOpen] = useState(false);
   const loadVersion = useRef(0);
 
   const load = useCallback(async (silent = false) => {
@@ -48,10 +44,6 @@ export default function RiderHomePage() {
       setMoto(mapRiderMeMotorcycle(rider));
       setRawTrips(tripResult.items);
       setTrips(tripResult.items.map(mapTrip));
-      const pending = tripResult.items.find((t) =>
-        ["RIDER_ASSIGNED"].includes(t.status.toUpperCase()),
-      );
-      setAssignmentOpen(Boolean(pending));
     } catch (err) {
       if (!silent && version === loadVersion.current) setError(err instanceof Error ? err.message : "Failed to load rider home");
     } finally {
@@ -83,42 +75,9 @@ export default function RiderHomePage() {
     [trips],
   );
 
-  const pendingAssignment = useMemo(
-    () => rawTrips.find((t) => t.status.toUpperCase() === "RIDER_ASSIGNED"),
-    [rawTrips],
-  );
-
   const completedToday = useMemo(() => {
     return trips.filter((t) => t.status === "completed").length;
   }, [trips]);
-
-  async function onAccept() {
-    if (!companyId || !pendingAssignment) return;
-    setBusy(true);
-    try {
-      await acceptTrip(companyId, pendingAssignment.id);
-      setAssignmentOpen(false);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Accept failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onDecline() {
-    if (!companyId || !pendingAssignment) return;
-    setBusy(true);
-    try {
-      await declineTrip(companyId, pendingAssignment.id);
-      setAssignmentOpen(false);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Decline failed");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   if (loading) {
     return (
@@ -238,39 +197,6 @@ export default function RiderHomePage() {
         </Link>
       </Card>
 
-      <Modal
-        open={assignmentOpen && Boolean(pendingAssignment)}
-        onClose={() => setAssignmentOpen(false)}
-        title="New trip assignment"
-        description={pendingAssignment?.employeeName ?? "Incoming request"}
-        footer={
-          <>
-            <Button variant="secondary" disabled={busy} onClick={() => void onDecline()}>
-              Decline
-            </Button>
-            <Button disabled={busy} onClick={() => void onAccept()}>
-              Accept
-            </Button>
-          </>
-        }
-      >
-        {pendingAssignment ? (
-          <div className="space-y-2 text-sm">
-            <p className="text-text">
-              <span className="text-text-muted">Pickup:</span>{" "}
-              {pendingAssignment.pickupAddress}
-            </p>
-            <p className="text-text">
-              <span className="text-text-muted">Destination:</span>{" "}
-              {pendingAssignment.destinationAddress}
-            </p>
-            <p className="text-text-secondary text-xs pt-1">
-              Est. {formatKm(Number(pendingAssignment.estimatedDistanceKm ?? 0))} ·{" "}
-              {formatRwf(Number(pendingAssignment.estimatedPrice ?? 0))}
-            </p>
-          </div>
-        ) : null}
-      </Modal>
     </div>
   );
 }

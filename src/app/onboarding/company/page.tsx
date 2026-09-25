@@ -155,6 +155,8 @@ export default function OnboardingCompanyPage() {
           companyName: membership.companyName,
           companyInitials: companyInitials(membership.companyName),
           companyStatus: membership.companyStatus ?? "PENDING_REVIEW",
+          companyType: membership.companyType ?? "CLIENT",
+          operatorCompanyId: me.operatorCompanyId ?? null,
           membershipId: membership.id,
         }),
       );

@@ -23,9 +23,10 @@ import { useEffect, useState } from "react";
 
 export default function AdminOverviewPage() {
   const dispatch = useAppDispatch();
-  const { userName, companyId } = useAppSelector((s) => s.auth);
+  const { userName, companyId, companyType } = useAppSelector((s) => s.auth);
+  const isClient = companyType === "CLIENT";
   const selectedId = useAppSelector((s) => s.ui.selectedMotorcycleId);
-  const { motorcycles, connecting } = useLiveFleet(companyId);
+  const { motorcycles, connecting } = useLiveFleet(isClient ? undefined : companyId);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [alerts, setAlerts] = useState<
     Array<{ id: string; title: string; severity: string; detectedAt: string }>
@@ -77,13 +78,23 @@ export default function AdminOverviewPage() {
           accent="primary"
           icon={<MapPinned className="size-4" />}
         />
-        <MetricCard
-          label="Available Riders"
-          value={s ? `${s.availableRiders} / ${s.totalRiders}` : "—"}
-          hint="Ready for assignment"
-          accent="success"
-          icon={<Users className="size-4" />}
-        />
+        {isClient ? (
+          <MetricCard
+            label="Employees"
+            value={s?.employeesCount ?? "—"}
+            hint="Active memberships"
+            accent="success"
+            icon={<Users className="size-4" />}
+          />
+        ) : (
+          <MetricCard
+            label="Available Riders"
+            value={s ? `${s.availableRiders} / ${s.totalRiders}` : "—"}
+            hint="Ready for assignment"
+            accent="success"
+            icon={<Users className="size-4" />}
+          />
+        )}
         <MetricCard
           label="Pending Approval"
           value={s?.pendingRequests ?? "—"}
@@ -91,31 +102,46 @@ export default function AdminOverviewPage() {
           accent="warning"
           icon={<ClipboardList className="size-4" />}
         />
-        <MetricCard
-          label="Fleet Online"
-          value={s ? `${s.motorcyclesOnline} / ${s.totalMotorcycles}` : "—"}
-          hint="GPS / phone tracking"
-          accent="success"
-          icon={<Bike className="size-4" />}
-        />
+        {isClient ? (
+          <MetricCard
+            label="Billing total"
+            value={s ? formatRwf(s.billingTotal ?? 0) : "—"}
+            hint="All billed trips"
+            accent="success"
+            icon={<Wallet className="size-4" />}
+          />
+        ) : (
+          <MetricCard
+            label="Fleet Online"
+            value={s ? `${s.motorcyclesOnline} / ${s.totalMotorcycles}` : "—"}
+            hint="GPS / phone tracking"
+            accent="success"
+            icon={<Bike className="size-4" />}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard label="Trips Today" value={s?.tripsToday ?? "—"} />
         <MetricCard label="Completed" value={s?.completedToday ?? "—"} accent="success" />
         <MetricCard
-          label="Revenue today"
+          label={isClient ? "Spend today" : "Revenue today"}
           value={s ? formatRwf(s.transportCostToday) : "—"}
           icon={<Wallet className="size-4" />}
         />
-        <MetricCard
-          label="Open incidents"
-          value={alerts.length}
-          accent="danger"
-          icon={<Route className="size-4" />}
-        />
+        {!isClient ? (
+          <MetricCard
+            label="Open incidents"
+            value={alerts.length}
+            accent="danger"
+            icon={<Route className="size-4" />}
+          />
+        ) : (
+          <MetricCard label="Members" value={s?.employeesCount ?? "—"} />
+        )}
       </div>
 
+      {!isClient ? (
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
         <Card className="xl:col-span-3 p-0 overflow-hidden" padding="none">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
@@ -165,6 +191,26 @@ export default function AdminOverviewPage() {
           )}
         </Card>
       </div>
+      ) : (
+        <Card padding="md">
+          <h2 className="text-sm font-semibold text-text mb-2">Your workspace</h2>
+          <p className="text-sm text-text-secondary">
+            Kampere Motari operates the rider fleet. Use Requests, Trips, Employees, and Billing
+            to manage your company&apos;s transport.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link href="/admin/requests" className="text-xs font-medium text-primary">
+              View requests
+            </Link>
+            <Link href="/admin/trips" className="text-xs font-medium text-primary">
+              View trips
+            </Link>
+            <Link href="/admin/billing" className="text-xs font-medium text-primary">
+              View billing
+            </Link>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

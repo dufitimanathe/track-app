@@ -97,8 +97,8 @@ function SidebarContent({
   unread: number;
 }) {
   const dispatch = useAppDispatch();
-  const { role, companyName, companyInitials } = useAppSelector((s) => s.auth);
-  const nav = navForRole(role);
+  const { role, companyName, companyInitials, companyType } = useAppSelector((s) => s.auth);
+  const nav = navForRole(role, companyType);
 
   return (
     <div className="flex h-full flex-col">

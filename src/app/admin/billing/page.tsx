@@ -9,6 +9,7 @@ import {
   fetchBilling,
   fetchCompany,
   fetchInvoices,
+  fetchOperatorClientCompanies,
   type BillingRecordDto,
 } from "@/lib/api/resources";
 import { calculateFare, formatRwf } from "@/lib/utils";
@@ -37,13 +38,40 @@ function weekKey(iso: string): string {
 }
 
 export default function BillingPage() {
-  const companyId = useAppSelector((s) => s.auth.companyId);
+  const homeCompanyId = useAppSelector((s) => s.auth.companyId);
   const companyName = useAppSelector((s) => s.auth.companyName);
+  const companyType = useAppSelector((s) => s.auth.companyType);
+  const role = useAppSelector((s) => s.auth.role);
+  const isOperatorStaff =
+    companyType === "OPERATOR" &&
+    (role === "COMPANY_ADMIN" || role === "ACCOUNTANT" || role === "PLATFORM_ADMIN");
+
+  const [scopeCompanyId, setScopeCompanyId] = useState(homeCompanyId);
+  const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [billing, setBilling] = useState<BillingRecordDto[]>([]);
   const [currency, setCurrency] = useState("RWF");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const companyId = scopeCompanyId || homeCompanyId;
+
+  useEffect(() => {
+    setScopeCompanyId(homeCompanyId);
+  }, [homeCompanyId]);
+
+  useEffect(() => {
+    if (!isOperatorStaff) return;
+    void fetchOperatorClientCompanies()
+      .then((list) =>
+        setClients(
+          list
+            .filter((c) => c.status === "ACTIVE" || c.status === "PENDING_REVIEW")
+            .map((c) => ({ id: c.id, name: c.name })),
+        ),
+      )
+      .catch(() => setClients([]));
+  }, [isOperatorStaff]);
 
   const load = useCallback(async () => {
     if (!companyId) return;
@@ -68,6 +96,10 @@ export default function BillingPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const scopeLabel =
+    clients.find((c) => c.id === companyId)?.name ??
+    (companyId === homeCompanyId ? companyName : "Selected company");
 
   const currentPeriod =
     invoices.find((i) => i.status === "pending") ?? invoices[0] ?? null;
@@ -116,7 +148,7 @@ export default function BillingPage() {
     <div className="space-y-5 sm:space-y-6 max-w-[1400px] mx-auto">
       <PageHeader
         title="Billing"
-        description={`Transport spend and invoicing for ${companyName || "your company"}.`}
+        description={`Trip km and amounts for ${scopeLabel || "your company"} — payment proof between Kampere Motari and the client.`}
         actions={
           <Link href="/admin/invoices">
             <Button variant="secondary" size="sm" leftIcon={<FileText className="size-3.5" />}>
@@ -125,6 +157,28 @@ export default function BillingPage() {
           </Link>
         }
       />
+
+      {isOperatorStaff && clients.length > 0 ? (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-[12px] border border-border bg-surface px-4 py-3">
+          <p className="text-sm text-text-secondary">
+            Select a client company to review trip billing proof and prepare payment requests.
+          </p>
+          <select
+            className="h-10 rounded-[8px] border border-border bg-surface px-3 text-sm text-text"
+            value={companyId}
+            onChange={(e) => setScopeCompanyId(e.target.value)}
+          >
+            <option value={homeCompanyId}>
+              {companyName || "Kampere Motari"} (own trips)
+            </option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       {error ? (
         <p className="text-sm text-danger bg-danger-soft rounded-[8px] px-3 py-2">{error}</p>

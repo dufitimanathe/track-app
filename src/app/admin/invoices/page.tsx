@@ -6,7 +6,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { EmptyState, PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { mapInvoice } from "@/lib/api/mappers";
-import { fetchInvoices } from "@/lib/api/resources";
+import { fetchInvoices, fetchOperatorClientCompanies } from "@/lib/api/resources";
 import { formatRwf } from "@/lib/utils";
 import { useAppSelector } from "@/store";
 import type { Invoice } from "@/types";
@@ -14,7 +14,15 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 export default function InvoicesPage() {
-  const companyId = useAppSelector((s) => s.auth.companyId);
+  const homeCompanyId = useAppSelector((s) => s.auth.companyId);
+  const companyType = useAppSelector((s) => s.auth.companyType);
+  const role = useAppSelector((s) => s.auth.role);
+  const isOperatorStaff =
+    companyType === "OPERATOR" &&
+    (role === "COMPANY_ADMIN" || role === "ACCOUNTANT" || role === "PLATFORM_ADMIN");
+
+  const [scopeCompanyId, setScopeCompanyId] = useState(homeCompanyId);
+  const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
@@ -23,6 +31,21 @@ export default function InvoicesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const companyId = scopeCompanyId || homeCompanyId;
+
+  useEffect(() => {
+    setScopeCompanyId(homeCompanyId);
+  }, [homeCompanyId]);
+
+  useEffect(() => {
+    if (!isOperatorStaff) return;
+    void fetchOperatorClientCompanies()
+      .then((list) =>
+        setClients(list.map((c) => ({ id: c.id, name: c.name }))),
+      )
+      .catch(() => setClients([]));
+  }, [isOperatorStaff]);
 
   const load = useCallback(async () => {
     if (!companyId) return;
@@ -60,14 +83,32 @@ export default function InvoicesPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [status, query]);
+  }, [status, query, companyId]);
 
   return (
     <div className="space-y-5 sm:space-y-6 max-w-[1400px] mx-auto">
       <PageHeader
         title="Invoices"
-        description="Billing documents issued for company transport usage."
+        description="Billing documents issued per company — use as proof when requesting payment."
       />
+
+      {isOperatorStaff && clients.length > 0 ? (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-[12px] border border-border bg-surface px-4 py-3">
+          <p className="text-sm text-text-secondary">Client company</p>
+          <select
+            className="h-10 rounded-[8px] border border-border bg-surface px-3 text-sm text-text"
+            value={companyId}
+            onChange={(e) => setScopeCompanyId(e.target.value)}
+          >
+            <option value={homeCompanyId}>Own company</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       {error ? (
         <p className="text-sm text-danger bg-danger-soft rounded-[8px] px-3 py-2">{error}</p>
