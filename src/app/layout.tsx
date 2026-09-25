@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   icons: {
-    icon: { url: "/app-logo.png", type: "image/png", sizes: "any" },
-    shortcut: "/app-logo.png",
-    apple: "/app-logo.png",
+    icon: { url: "/logo.jpeg", type: "image/jpeg", sizes: "any" },
+    shortcut: "/logo.jpeg",
+    apple: "/logo.jpeg",
   },
   title: {
     default: "FleetOps",
