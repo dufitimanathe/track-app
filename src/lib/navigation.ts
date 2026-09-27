@@ -110,6 +110,22 @@ export const platformNav: NavItem[] = [
   { label: "Overview", href: "/platform", icon: LayoutDashboard },
   { label: "Companies", href: "/platform/companies", icon: Building2, badge: "pending" },
   { label: "Register company", href: "/platform/companies/new", icon: ClipboardList },
+  // Kampere Motari operator ops (same capabilities as company admin / accountant views)
+  { label: "Live Operations", href: "/admin/live", icon: MapPinned },
+  { label: "Tracking History", href: "/admin/tracking/history", icon: History },
+  { label: "Geofences", href: "/admin/tracking/geofences", icon: CircleDot },
+  { label: "Requests", href: "/admin/requests", icon: ClipboardList, badge: "pending" },
+  { label: "Trips", href: "/admin/trips", icon: Activity },
+  { label: "Fleet", href: "/admin/fleet", icon: Bike },
+  { label: "Riders", href: "/admin/riders", icon: Users },
+  { label: "Employees", href: "/admin/employees", icon: Building2 },
+  { label: "Supervisors", href: "/admin/supervisors", icon: Shield },
+  { label: "Billing", href: "/admin/billing", icon: Wallet },
+  { label: "Invoices", href: "/admin/invoices", icon: Receipt },
+  { label: "Incidents", href: "/admin/incidents", icon: AlertTriangle, badge: "incidents" },
+  { label: "Reports", href: "/admin/reports", icon: FileText },
+  { label: "Notifications", href: "/admin/notifications", icon: Bell },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 const CLIENT_BLOCKED_PATH_PREFIXES = [

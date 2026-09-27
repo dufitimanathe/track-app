@@ -110,7 +110,9 @@ function SidebarContent({
           {!collapsed ? (
             <div className="min-w-0">
               <p className="text-sm font-semibold text-text truncate">{companyName}</p>
-              <p className="text-xs text-text-muted">Company Workspace</p>
+              <p className="text-xs text-text-muted">
+                {role === "PLATFORM_ADMIN" ? "Super Admin" : "Company Workspace"}
+              </p>
             </div>
           ) : null}
         </div>

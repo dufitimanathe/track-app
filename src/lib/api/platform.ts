@@ -15,6 +15,20 @@ export type CompanyDocumentType =
 
 export type CompanyDocumentStatus = 'SUBMITTED' | 'APPROVED' | 'REJECTED';
 
+export interface PlatformCompanyTripInsight {
+  companyId: string;
+  companyName: string;
+  tripCount: number;
+}
+
+export interface PlatformEmployeeTripInsight {
+  employeeId: string;
+  employeeName: string;
+  companyId: string;
+  companyName: string;
+  tripCount: number;
+}
+
 export interface PlatformOverview {
   totalCompanies: number;
   pendingReview: number;
@@ -22,6 +36,12 @@ export interface PlatformOverview {
   suspendedCompanies: number;
   rejectedCompanies: number;
   pendingDocuments: number;
+  totalCompletedTrips: number;
+  tripsCompletedToday: number;
+  activeRiders: number;
+  activeMotorcycles: number;
+  topCompaniesByTrips: PlatformCompanyTripInsight[];
+  topEmployeesByTrips: PlatformEmployeeTripInsight[];
 }
 
 export interface PlatformCompany {

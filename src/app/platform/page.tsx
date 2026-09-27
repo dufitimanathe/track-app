@@ -3,9 +3,20 @@
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { fetchPlatformOverview, type PlatformOverview } from "@/lib/api/platform";
-import { Building2, ClipboardCheck, FileWarning, Shield } from "lucide-react";
+import {
+  Activity,
+  Bike,
+  Building2,
+  ClipboardCheck,
+  FileWarning,
+  MapPinned,
+  Shield,
+  Users,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
 export default function PlatformOverviewPage() {
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +36,7 @@ export default function PlatformOverviewPage() {
     })();
   }, []);
 
-  const cards = [
+  const companyCards = [
     {
       label: "Pending review",
       value: overview?.pendingReview ?? 0,
@@ -52,13 +63,62 @@ export default function PlatformOverviewPage() {
     },
   ];
 
+  const opsCards = [
+    {
+      label: "Trips completed",
+      value: overview?.totalCompletedTrips ?? 0,
+      href: "/admin/trips",
+      icon: Activity,
+      hint: "All client companies",
+    },
+    {
+      label: "Completed today",
+      value: overview?.tripsCompletedToday ?? 0,
+      href: "/admin/trips",
+      icon: MapPinned,
+      hint: "UTC day",
+    },
+    {
+      label: "Active riders",
+      value: overview?.activeRiders ?? 0,
+      href: "/admin/riders",
+      icon: Users,
+      hint: "Kampere Motari fleet",
+    },
+    {
+      label: "Active motorcycles",
+      value: overview?.activeMotorcycles ?? 0,
+      href: "/admin/fleet",
+      icon: Bike,
+      hint: "Kampere Motari fleet",
+    },
+  ];
+
+  const topCompanies = overview?.topCompaniesByTrips ?? [];
+  const topEmployees = overview?.topEmployeesByTrips ?? [];
+  const maxCompanyTrips = Math.max(1, ...topCompanies.map((c) => c.tripCount));
+  const maxEmployeeTrips = Math.max(1, ...topEmployees.map((e) => e.tripCount));
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Super Admin"
-        description="Manage client companies for Kampere Motari — registration, document validation, and company admins."
+        title="Kampere Motari overview"
+        description="Platform insights across client companies, plus full access to Kampere Motari operations, billing, and fleet."
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/live"
+              className="inline-flex h-10 items-center rounded-[8px] border border-border bg-surface px-4 text-sm font-medium text-text hover:bg-surface-muted"
+            >
+              Live operations
+            </Link>
+            <Link
+              href="/admin/billing"
+              className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-border bg-surface px-4 text-sm font-medium text-text hover:bg-surface-muted"
+            >
+              <Wallet className="size-4" />
+              Billing
+            </Link>
             <Link
               href="/platform/companies"
               className="inline-flex h-10 items-center rounded-[8px] border border-border bg-surface px-4 text-sm font-medium text-text hover:bg-surface-muted"
@@ -81,38 +141,139 @@ export default function PlatformOverviewPage() {
         </Card>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <Link key={card.label} href={card.href}>
-              <Card padding="lg" className="h-full transition hover:border-primary/40">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm text-text-secondary">{card.label}</p>
-                    <p className="mt-2 text-3xl font-semibold tracking-tight text-text">
-                      {loading ? "—" : card.value}
-                    </p>
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
+          Client companies
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {companyCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <Link key={card.label} href={card.href}>
+                <Card padding="lg" className="h-full transition hover:border-primary/40">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm text-text-secondary">{card.label}</p>
+                      <p className="mt-2 text-3xl font-semibold tracking-tight text-text">
+                        {loading ? "—" : card.value}
+                      </p>
+                    </div>
+                    <span className="rounded-lg bg-primary-soft p-2 text-primary">
+                      <Icon className="size-4" />
+                    </span>
                   </div>
-                  <span className="rounded-lg bg-primary-soft p-2 text-primary">
-                    <Icon className="size-4" />
-                  </span>
-                </div>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
-      <Card padding="lg" className="space-y-3">
-        <h2 className="text-base font-semibold text-text">How company onboarding works</h2>
-        <ol className="list-decimal space-y-2 pl-5 text-sm text-text-secondary">
-          <li>A client company registers from the home page (or you create one here).</li>
-          <li>They submit registration details and supporting document links.</li>
-          <li>You validate documents, then approve or reject the company.</li>
-          <li>Once approved, their company admins can enrol employees and run operations.</li>
-        </ol>
-      </Card>
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
+          Operations insights
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {opsCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <Link key={card.label} href={card.href}>
+                <Card padding="lg" className="h-full transition hover:border-primary/40">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm text-text-secondary">{card.label}</p>
+                      <p className="mt-2 text-3xl font-semibold tracking-tight text-text">
+                        {loading ? "—" : card.value}
+                      </p>
+                      <p className="mt-1 text-xs text-text-muted">{card.hint}</p>
+                    </div>
+                    <span className="rounded-lg bg-primary-soft p-2 text-primary">
+                      <Icon className="size-4" />
+                    </span>
+                  </div>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card padding="lg" className="space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-text">Companies moved most</h2>
+            <p className="text-sm text-text-secondary">
+              Client companies ranked by completed employee trips.
+            </p>
+          </div>
+          {loading ? (
+            <p className="text-sm text-text-muted">Loading…</p>
+          ) : topCompanies.length === 0 ? (
+            <p className="text-sm text-text-muted">No completed trips yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {topCompanies.map((row, index) => (
+                <li key={row.companyId} className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="min-w-0 truncate font-medium text-text">
+                      <span className="mr-2 text-text-muted">{index + 1}.</span>
+                      {row.companyName}
+                    </span>
+                    <span className="shrink-0 tabular-nums text-text-secondary">
+                      {row.tripCount} trips
+                    </span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${Math.round((row.tripCount / maxCompanyTrips) * 100)}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card padding="lg" className="space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-text">Employees moved most</h2>
+            <p className="text-sm text-text-secondary">
+              Top employees by completed trips, with owning company.
+            </p>
+          </div>
+          {loading ? (
+            <p className="text-sm text-text-muted">Loading…</p>
+          ) : topEmployees.length === 0 ? (
+            <p className="text-sm text-text-muted">No completed trips yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {topEmployees.map((row, index) => (
+                <li key={row.employeeId} className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-text">
+                        <span className="mr-2 text-text-muted">{index + 1}.</span>
+                        {row.employeeName}
+                      </p>
+                      <p className="truncate text-xs text-text-muted">{row.companyName}</p>
+                    </div>
+                    <span className="shrink-0 tabular-nums text-text-secondary">
+                      {row.tripCount} trips
+                    </span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${Math.round((row.tripCount / maxEmployeeTrips) * 100)}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }
