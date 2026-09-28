@@ -5,6 +5,7 @@ import { Avatar, Modal } from "@/components/ui/overlay";
 import { LiveIndicator } from "@/components/ui/page-header";
 import { logoutRequest } from "@/lib/api/auth";
 import { clearSession as clearStorage, getRefreshToken } from "@/lib/api/client";
+import { resolveUploadUrl } from "@/lib/config";
 import { navForRole, roleLabel, type NavItem } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -97,16 +98,19 @@ function SidebarContent({
   unread: number;
 }) {
   const dispatch = useAppDispatch();
-  const { role, companyName, companyInitials, companyType } = useAppSelector((s) => s.auth);
+  const { role, companyName, companyType } = useAppSelector((s) => s.auth);
   const nav = navForRole(role, companyType);
 
   return (
     <div className="flex h-full flex-col">
       <div className={cn("border-b border-border px-4 py-4", collapsed && "px-2")}>
         <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
-          <div className="size-10 rounded-[10px] bg-primary text-white flex items-center justify-center text-sm font-bold shrink-0">
-            {companyInitials}
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.jpeg"
+            alt="Kampere Motari"
+            className="size-10 rounded-[10px] object-cover shrink-0"
+          />
           {!collapsed ? (
             <div className="min-w-0">
               <p className="text-sm font-semibold text-text truncate">{companyName}</p>
@@ -210,6 +214,7 @@ function TopHeader({
     userName,
     userEmail,
     avatarInitials,
+    avatarUrl,
     role,
     companyName,
   } = useAppSelector((s) => s.auth);
@@ -358,7 +363,11 @@ function TopHeader({
             aria-expanded={profileOpen}
             aria-haspopup="menu"
           >
-            <Avatar initials={avatarInitials} size="sm" />
+            <Avatar
+              initials={avatarInitials}
+              src={resolveUploadUrl(avatarUrl) || null}
+              size="sm"
+            />
             <div className="hidden md:block min-w-0 text-left">
               <p className="text-sm font-medium text-text truncate max-w-[120px]">
                 {userName}
@@ -501,7 +510,7 @@ export function AppShell({
   const { role, companyId } = useAppSelector((s) => s.auth);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
-  useAdminRealtimeToasts(role === "COMPANY_ADMIN" || role === "SUPERVISOR");
+  useAdminRealtimeToasts(role === "PLATFORM_ADMIN" || role === "SUPERVISOR");
 
   useEffect(() => {
     if (!companyId) return;

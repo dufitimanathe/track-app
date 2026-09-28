@@ -43,7 +43,7 @@ export default function MotorcycleDetailPage() {
   const base = opsBasePath(role);
   const fleetHome = role === "SUPERVISOR" ? `${base}/fleet` : role === "ACCOUNTANT" ? `${base}/trips` : `${base}/fleet`;
   const liveHome = role === "SUPERVISOR" ? `${base}/fleet` : "/admin/live";
-  const canManageFleet = role === "COMPANY_ADMIN";
+  const canManageFleet = role === "PLATFORM_ADMIN";
   const [moto, setMoto] = useState<Motorcycle | null>(null);
   const [rider, setRider] = useState<Rider | null>(null);
   const [activeAssignment, setActiveAssignment] = useState<AssignmentDto | null>(null);

@@ -202,10 +202,12 @@ export function Timeline({
 
 export function Avatar({
   initials,
+  src,
   size = "md",
   className,
 }: {
   initials: string;
+  src?: string | null;
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
@@ -214,6 +216,20 @@ export function Avatar({
     md: "size-9 text-xs",
     lg: "size-12 text-sm",
   };
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt=""
+        className={cn(
+          "inline-block rounded-full object-cover shrink-0 bg-primary-soft",
+          sizes[size],
+          className,
+        )}
+      />
+    );
+  }
   return (
     <span
       className={cn(

@@ -45,3 +45,33 @@ export async function uploadCompanyDocumentViaApi(file: File) {
   void apiFetch;
   return uploadCompanyDocumentFile(file);
 }
+
+export async function uploadAvatarFile(file: File): Promise<{
+  id: string;
+  avatarUrl?: string | null;
+}> {
+  const form = new FormData();
+  form.append('file', file);
+
+  const headers = withNgrokSkipBrowserWarning(new Headers());
+  const token = getAccessToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const response = await fetch(`${appConfig.apiUrl}/uploads/avatar`, {
+    method: 'POST',
+    headers,
+    body: form,
+  });
+
+  const payload = (await response.json().catch(() => null)) as {
+    success?: boolean;
+    data?: { id: string; avatarUrl?: string | null };
+    error?: { message?: string };
+  } | null;
+
+  if (!response.ok || !payload?.data) {
+    throw new Error(payload?.error?.message ?? `Upload failed (${response.status})`);
+  }
+
+  return payload.data;
+}

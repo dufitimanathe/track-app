@@ -25,7 +25,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 export default function EmployeesPage() {
   const companyId = useAppSelector((s) => s.auth.companyId);
   const role = useAppSelector((s) => s.auth.role);
-  const canManage = role === "COMPANY_ADMIN";
+  const canManage = role === "PLATFORM_ADMIN" || role === "SUPERVISOR";
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<Employee[]>([]);

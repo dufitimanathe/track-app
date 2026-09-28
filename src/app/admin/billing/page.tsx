@@ -44,7 +44,7 @@ export default function BillingPage() {
   const role = useAppSelector((s) => s.auth.role);
   const isOperatorStaff =
     companyType === "OPERATOR" &&
-    (role === "COMPANY_ADMIN" || role === "ACCOUNTANT" || role === "PLATFORM_ADMIN");
+    (role === "PLATFORM_ADMIN" || role === "ACCOUNTANT");
 
   const [scopeCompanyId, setScopeCompanyId] = useState(homeCompanyId);
   const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);

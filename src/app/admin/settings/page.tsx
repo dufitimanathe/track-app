@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { TrackingSettingsCard } from "@/components/settings/tracking-settings-card";
+import { ProfilePhotoEditor } from "@/components/profile/profile-photo-editor";
 import { companyInitials } from "@/lib/api/auth";
 import { fetchCompany, updateCompany, type CompanyDto } from "@/lib/api/resources";
 import {
@@ -212,6 +213,14 @@ function CompanySettings({ companyId }: { companyId: string }) {
 
         <div className="space-y-4">
           {section === "company" ? (
+            <>
+              <Card padding="lg">
+                <h2 className="text-base font-semibold text-text">Your profile photo</h2>
+                <p className="text-xs text-text-muted mt-0.5 mb-4">
+                  Shown in the top bar and on your account. Upload a clear photo of yourself.
+                </p>
+                <ProfilePhotoEditor />
+              </Card>
             <Card>
               <h2 className="text-base font-semibold text-text">Company Profile</h2>
               <p className="text-xs text-text-muted mt-0.5">
@@ -283,6 +292,7 @@ function CompanySettings({ companyId }: { companyId: string }) {
                 </div>
               </form>
             </Card>
+            </>
           ) : null}
 
           {section === "pricing" ? (

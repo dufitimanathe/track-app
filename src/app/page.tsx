@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import { LandingPage } from "@/components/landing/landing-page";
 
-const displayFont = Space_Grotesk({ subsets: ["latin"], variable: "--font-landing-display", display: "swap" });
+const displayFont = localFont({
+  src: "./fonts/space-grotesk-latin-wght-normal.woff2",
+  variable: "--font-landing-display",
+  display: "swap",
+  weight: "300 700",
+});
 
 export const metadata: Metadata = {
   title: { absolute: "KAMPERE MOTARI LTD | Better journeys for your team" },

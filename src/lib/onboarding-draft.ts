@@ -5,7 +5,7 @@ export interface OnboardingAdminDraft {
   lastName: string;
   email: string;
   phone: string;
-  password: string;
+  companyName: string;
 }
 
 export function saveAdminDraft(draft: OnboardingAdminDraft): void {

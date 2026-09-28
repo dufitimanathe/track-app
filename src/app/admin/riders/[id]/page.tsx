@@ -31,7 +31,7 @@ export default function RiderDetailPage() {
   const companyId = useAppSelector((s) => s.auth.companyId);
   const role = useAppSelector((s) => s.auth.role);
   const base = opsBasePath(role);
-  const canManage = role === "COMPANY_ADMIN";
+  const canManage = role === "PLATFORM_ADMIN";
   const backHref = role === "SUPERVISOR" ? `${base}/fleet` : `${base}/riders`;
   const backLabel = role === "SUPERVISOR" ? "Back to fleet" : "Back to riders";
   const [rider, setRider] = useState<Rider | null>(null);

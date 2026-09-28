@@ -107,7 +107,7 @@ export default function PlatformCompanyDetailPage() {
   async function onAddAdmin(e: FormEvent) {
     e.preventDefault();
     if (!isValidEmail(adminForm.email)) {
-      setError("Enter a valid admin email.");
+      setError("Enter a valid supervisor email.");
       return;
     }
     if (adminForm.phone.trim() && !isValidRwandaPhone(adminForm.phone)) {
@@ -128,13 +128,13 @@ export default function PlatformCompanyDetailPage() {
       setInviteHint(
         member.temporaryPassword
           ? `Invite created. Temporary password: ${member.temporaryPassword}`
-          : "Admin invite sent.",
+          : "Supervisor invite sent.",
       );
       setAdminOpen(false);
       setAdminForm({ firstName: "", lastName: "", email: "", phone: "" });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not add admin");
+      setError(err instanceof Error ? err.message : "Could not add supervisor");
     } finally {
       setBusy(false);
     }
@@ -194,7 +194,7 @@ export default function PlatformCompanyDetailPage() {
     <div className="space-y-6">
       <PageHeader
         title={company.name}
-        description="Validate documents, approve registration, and manage company admins."
+        description="Validate documents, approve registration, and manage company supervisors."
         actions={
           <Link
             href="/platform/companies"
@@ -260,7 +260,7 @@ export default function PlatformCompanyDetailPage() {
               disabled={busy}
               onClick={() => void runAction(() => suspendPlatformCompany(companyId))}
             >
-              Suspend
+              Block company
             </Button>
           )}
           {(company.status === "SUSPENDED" || company.status === "REJECTED") && (
@@ -268,10 +268,16 @@ export default function PlatformCompanyDetailPage() {
               disabled={busy}
               onClick={() => void runAction(() => reactivatePlatformCompany(companyId))}
             >
-              Reactivate
+              Unblock / Reactivate
             </Button>
           )}
         </div>
+        {company.status === "ACTIVE" && (
+          <p className="text-xs text-text-muted">
+            Block stops WhatsApp trip requests for this company&apos;s employees until you
+            reactivate.
+          </p>
+        )}
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -355,13 +361,13 @@ export default function PlatformCompanyDetailPage() {
 
         <Card padding="lg" className="space-y-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-text">Company admins</h2>
+            <h2 className="text-base font-semibold text-text">Company supervisors</h2>
             <Button size="sm" variant="secondary" onClick={() => setAdminOpen(true)}>
-              Add admin
+              Add supervisor
             </Button>
           </div>
           {admins.length === 0 ? (
-            <p className="text-sm text-text-secondary">No company admins yet.</p>
+            <p className="text-sm text-text-secondary">No company supervisors yet.</p>
           ) : (
             <ul className="space-y-3">
               {admins.map((admin) => (
@@ -441,7 +447,7 @@ export default function PlatformCompanyDetailPage() {
         </form>
       </Modal>
 
-      <Modal open={adminOpen} onClose={() => setAdminOpen(false)} title="Add company admin">
+      <Modal open={adminOpen} onClose={() => setAdminOpen(false)} title="Add company supervisor">
         <form onSubmit={onAddAdmin} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="First name">
@@ -478,7 +484,7 @@ export default function PlatformCompanyDetailPage() {
               Cancel
             </Button>
             <Button type="submit" disabled={busy}>
-              Invite admin
+              Invite supervisor
             </Button>
           </div>
         </form>

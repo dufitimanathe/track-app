@@ -90,7 +90,7 @@ export function Tabs({
   return (
     <div
       className={cn(
-        "flex gap-1 overflow-x-auto border-b border-border -mx-1 px-1",
+        "flex flex-wrap items-center gap-1 border-b border-border",
         className,
       )}
     >

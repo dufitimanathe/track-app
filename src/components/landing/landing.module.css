@@ -20,9 +20,9 @@
 .skipLink:focus { top: 12px; }
 .header { position: sticky; top: 0; z-index: 40; background: #fff; border-bottom: 1px solid var(--border); }
 .headerInner { min-height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; line-height: 1; font-family: var(--display); font-size: 23px; font-weight: 700; letter-spacing: -.055em; }
-.brandMark { display: grid; place-content: center; position: relative; background: var(--primary); color: white; width: 42px; height: 44px; border-radius: 11px 11px 11px 2px; font-size: 36px; padding-bottom: 5px; padding-right: 4px; letter-spacing: -.12em; }
-.brandMark span { position: absolute; right: 9px; bottom: 7px; font-size: 28px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; line-height: 1; }
+.brandLogo { display: block; height: 52px; width: auto; max-width: min(200px, 48vw); object-fit: contain; }
+.brandMark { display: block; object-fit: cover; width: 42px; height: 44px; border-radius: 11px 11px 11px 2px; }
 .brandSecond { display: block; margin-top: 5px; text-transform: uppercase; letter-spacing: .19em; font-size: 9px; font-weight: 500; }
 .desktopNav { display: flex; gap: 29px; align-items: center; }
 .desktopNav a, .footer nav a { font-size: 12px; color: var(--text-secondary); transition: color .2s; }
@@ -121,7 +121,7 @@
 .messageDemo { border: 1px solid #d9e2ee; border-radius: 11px; background: white; box-shadow: 0 14px 35px #213e7109; overflow: hidden; transform: rotate(1.5deg); transition: transform .4s; }
 .messageDemo:hover { transform: rotate(0); }
 .chatHeader { display: flex; align-items: center; gap: 11px; border-bottom: 1px solid var(--border); padding: 17px 19px; }
-.chatAvatar { display: grid; place-items: center; width: 35px; height: 35px; background: var(--primary); color: white; font-family: var(--display); font-weight: 600; border-radius: 9px; font-size: 18px; letter-spacing: -.06em; }
+.chatAvatar { display: block; object-fit: cover; width: 35px; height: 35px; border-radius: 9px; }
 .chatHeader strong { display: block; font-size: 11px; font-weight: 500; }
 .chatHeader div > span { display: block; font-size: 9px; color: #64748b; margin-top: 2px; }
 .chatBody { padding: 20px; background: #f8fafc; }
@@ -247,8 +247,9 @@
 }
 @media (max-width: 540px) {
   .landing section, .landing main { scroll-margin-top: 88px; }
-  .brand { font-size: 21px; gap: 8px; }
-  .brandMark { width: 37px; height: 39px; font-size: 32px; }
+  .brand { gap: 8px; }
+  .brandLogo { height: 44px; }
+  .brandMark { width: 37px; height: 39px; }
   .brandSecond { font-size: 8px; }
   .headerInner { gap: 12px; }
   .headerActions { gap: 4px; }

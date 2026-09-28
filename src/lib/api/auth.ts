@@ -8,6 +8,7 @@ export interface BackendUser {
   lastName: string;
   email?: string | null;
   phone?: string | null;
+  avatarUrl?: string | null;
   status: string;
   lastLoginAt?: string | null;
   createdAt: string;
@@ -54,9 +55,8 @@ export async function registerCompanyRequest(input: {
   admin: {
     firstName: string;
     lastName: string;
-    email?: string;
-    phone?: string;
-    password: string;
+    email: string;
+    phone: string;
   };
   documents?: Array<{
     type: string;
@@ -64,8 +64,13 @@ export async function registerCompanyRequest(input: {
     fileUrl: string;
     notes?: string;
   }>;
-}): Promise<AuthResponse> {
-  return apiFetch<AuthResponse>(
+}): Promise<{
+  message: string;
+  companyName: string;
+  email?: string | null;
+  companyId: string;
+}> {
+  return apiFetch(
     '/auth/register-company',
     { method: 'POST', body: JSON.stringify(input) },
     { skipAuth: true },
@@ -131,10 +136,10 @@ export function pickMembership(memberships: Membership[]): Membership | null {
   const active = memberships.filter((m) => m.status === 'ACTIVE');
   const preferred =
     active.find((m) => m.role === 'PLATFORM_ADMIN') ??
-    active.find((m) => m.role === 'COMPANY_ADMIN') ??
     active.find((m) => m.role === 'SUPERVISOR') ??
     active.find((m) => m.role === 'ACCOUNTANT') ??
     active.find((m) => m.role === 'RIDER') ??
+    active.find((m) => m.role === 'COMPANY_ADMIN') ??
     active[0];
   return preferred ?? null;
 }

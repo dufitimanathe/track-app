@@ -2,13 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Field, Input, PasswordInput } from "@/components/ui/input";
+import { Field, Input } from "@/components/ui/input";
 import { saveAdminDraft } from "@/lib/onboarding-draft";
 import {
   isValidEmail,
   isValidRwandaPhone,
   normalizeRwandaPhone,
 } from "@/lib/validation/rwanda";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -20,7 +21,7 @@ export default function RegisterPage() {
     lastName: "",
     email: "",
     phone: "",
-    password: "",
+    companyName: "",
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -32,16 +33,16 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
+    if (!form.companyName.trim()) {
+      setError("Enter your company name.");
+      return;
+    }
     if (!isValidEmail(form.email)) {
       setError("Enter a valid work email address.");
       return;
     }
     if (!isValidRwandaPhone(form.phone)) {
       setError("Phone must be a valid Rwanda mobile (e.g. 0788123456 or +250788123456).");
-      return;
-    }
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.password)) {
-      setError("Password must include uppercase, lowercase, and a number.");
       return;
     }
 
@@ -56,7 +57,7 @@ export default function RegisterPage() {
       lastName: form.lastName.trim(),
       email: form.email.trim(),
       phone,
-      password: form.password,
+      companyName: form.companyName.trim(),
     });
     router.push("/onboarding/company");
   }
@@ -64,9 +65,19 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-[420px]">
-        <p className="text-center text-xs font-semibold tracking-[0.14em] uppercase text-text-muted mb-6">
-          FleetOps
-        </p>
+        <div className="mb-6 flex flex-col items-center gap-2">
+          <Image
+            src="/logo.jpeg"
+            alt="Kampere Motari"
+            width={48}
+            height={48}
+            className="rounded-[10px] object-cover"
+            priority
+          />
+          <p className="text-center text-xs font-semibold tracking-[0.14em] uppercase text-text-muted">
+            Kampere Motari
+          </p>
+        </div>
 
         <Card className="shadow-[var(--shadow-soft)]" padding="lg">
           <div className="mb-6">
@@ -74,7 +85,7 @@ export default function RegisterPage() {
               Join the waitlist
             </h1>
             <p className="mt-1 text-sm text-text-secondary">
-              Create your account, share company details, and wait for Kampere Motari approval
+              Share your contact details and company. After Super Admin approval, we email you a link to set your password and sign in.
             </p>
           </div>
 
@@ -97,6 +108,14 @@ export default function RegisterPage() {
                 />
               </Field>
             </div>
+            <Field label="Company">
+              <Input
+                value={form.companyName}
+                onChange={(e) => update("companyName", e.target.value)}
+                placeholder="Acme Rwanda Ltd"
+                required
+              />
+            </Field>
             <Field label="Work email">
               <Input
                 type="email"
@@ -106,28 +125,13 @@ export default function RegisterPage() {
                 required
               />
             </Field>
-            <Field
-              label="Phone"
-              hint="Rwanda mobile · 0788… or +250788…"
-            >
+            <Field label="Phone" hint="Rwanda mobile · 0788… or +250788…">
               <Input
                 type="tel"
                 value={form.phone}
                 onChange={(e) => update("phone", e.target.value)}
                 placeholder="+250 788 000 000"
                 required
-              />
-            </Field>
-            <Field
-              label="Password"
-              hint="8+ chars with upper, lower, and a number"
-            >
-              <PasswordInput
-                value={form.password}
-                onChange={(e) => update("password", e.target.value)}
-                autoComplete="new-password"
-                required
-                minLength={8}
               />
             </Field>
 

@@ -47,10 +47,7 @@ export default function SupervisorsPage() {
     try {
       const result = await fetchMembers(companyId, { page, limit: 20 });
       const supervisors = result.items.filter(
-        (m) =>
-          m.role === "SUPERVISOR" ||
-          m.role === "ACCOUNTANT" ||
-          m.role === "COMPANY_ADMIN",
+        (m) => m.role === "SUPERVISOR" || m.role === "ACCOUNTANT",
       );
       setRawMembers(supervisors);
       setItems(supervisors.map(mapMemberToSupervisor));
@@ -135,7 +132,7 @@ export default function SupervisorsPage() {
     <div className="space-y-4 sm:space-y-5 max-w-[1200px] mx-auto">
       <PageHeader
         title="Supervisors & accountants"
-        description="Invite ops supervisors (riders, fleet, requests) or accountants (billing, trips, money). Only company admins can add users."
+        description="Invite ops supervisors or accountants. Only Super Admin can add users."
         actions={
           <Button type="button" onClick={openAdd}>
             <Plus className="size-4" />

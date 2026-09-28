@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthBootstrap } from "@/components/auth/auth-bootstrap";
+import { WhatsAppFab } from "@/components/whatsapp-fab";
 import { StoreProvider } from "@/store/provider";
 import "./globals.css";
 
@@ -21,8 +22,8 @@ export const metadata: Metadata = {
     apple: "/logo.jpeg",
   },
   title: {
-    default: "FleetOps",
-    template: "%s · FleetOps",
+    default: "Kampere Motari Ltd",
+    template: "%s · Kampere Motari",
   },
   description:
     "Corporate transport and motorcycle fleet management — dispatch, GPS tracking, trips, and billing.",
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body className="min-h-full font-sans">
         <StoreProvider>
           <AuthBootstrap>{children}</AuthBootstrap>
+          <WhatsAppFab />
         </StoreProvider>
       </body>
     </html>

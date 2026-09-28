@@ -33,8 +33,33 @@ export default function AdminTripsPage() {
   const [items, setItems] = useState<Trip[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [counts, setCounts] = useState<Record<TripTab, number>>({
+    all: 0,
+    active: 0,
+    completed: 0,
+    cancelled: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const loadCounts = useCallback(async () => {
+    if (!companyId) return;
+    try {
+      const [all, active, completed, cancelled] = await Promise.all(
+        (["all", "active", "completed", "cancelled"] as TripTab[]).map((key) =>
+          fetchTrips(companyId, {
+            page: 1,
+            limit: 1,
+            status: TAB_STATUS[key],
+            sort: "createdAt:DESC",
+          }).then((r) => r.meta.total),
+        ),
+      );
+      setCounts({ all, active, completed, cancelled });
+    } catch {
+      // Counts are optional UI; list load still surfaces errors.
+    }
+  }, [companyId]);
 
   const load = useCallback(async () => {
     if (!companyId) return;
@@ -62,12 +87,17 @@ export default function AdminTripsPage() {
       setItems(mapped);
       setTotal(result.meta.total);
       setTotalPages(result.meta.totalPages || 1);
+      setCounts((prev) => ({ ...prev, [tab]: result.meta.total }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load trips");
     } finally {
       setLoading(false);
     }
   }, [companyId, page, query, tab]);
+
+  useEffect(() => {
+    void loadCounts();
+  }, [loadCounts]);
 
   useEffect(() => {
     void load();
@@ -84,10 +114,10 @@ export default function AdminTripsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Tabs
           tabs={[
-            { id: "all", label: "All", count: tab === "all" ? total : undefined },
-            { id: "active", label: "Active" },
-            { id: "completed", label: "Completed" },
-            { id: "cancelled", label: "Cancelled" },
+            { id: "all", label: "All", count: counts.all },
+            { id: "active", label: "Active", count: counts.active },
+            { id: "completed", label: "Completed", count: counts.completed },
+            { id: "cancelled", label: "Cancelled", count: counts.cancelled },
           ]}
           active={tab}
           onChange={(id) => setTab(id as TripTab)}

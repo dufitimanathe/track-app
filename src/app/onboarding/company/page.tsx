@@ -3,15 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/input";
-import {
-  companyInitials,
-  displayName,
-  fetchMe,
-  initialsOf,
-  persistAuth,
-  pickMembership,
-  registerCompanyRequest,
-} from "@/lib/api/auth";
+import { registerCompanyRequest } from "@/lib/api/auth";
 import { uploadCompanyDocumentFile } from "@/lib/api/uploads";
 import { clearAdminDraft, loadAdminDraft } from "@/lib/onboarding-draft";
 import {
@@ -19,14 +11,11 @@ import {
   isValidRwandaPhone,
   normalizeRwandaPhone,
 } from "@/lib/validation/rwanda";
-import { useAppDispatch } from "@/store";
-import { setSession } from "@/store/slices/auth-slice";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function OnboardingCompanyPage() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -42,9 +31,17 @@ export default function OnboardingCompanyPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loadAdminDraft()) {
+    const draft = loadAdminDraft();
+    if (!draft) {
       router.replace("/register");
+      return;
     }
+    setForm((prev) => ({
+      ...prev,
+      name: draft.companyName || prev.name,
+      email: draft.email || prev.email,
+      phone: draft.phone || prev.phone,
+    }));
   }, [router]);
 
   function update(field: keyof typeof form, value: string) {
@@ -72,8 +69,13 @@ export default function OnboardingCompanyPage() {
         setLoading(false);
         return;
       }
-      if (admin.phone && !isValidRwandaPhone(admin.phone)) {
-        setError("Admin phone on your account draft is invalid. Go back and fix it.");
+      if (!admin.email || !isValidEmail(admin.email)) {
+        setError("Your work email on the previous step is invalid. Go back and fix it.");
+        setLoading(false);
+        return;
+      }
+      if (!admin.phone || !isValidRwandaPhone(admin.phone)) {
+        setError("Your phone on the previous step is invalid. Go back and fix it.");
         setLoading(false);
         return;
       }
@@ -91,9 +93,12 @@ export default function OnboardingCompanyPage() {
       const companyPhone = form.phone.trim()
         ? normalizeRwandaPhone(form.phone) ?? undefined
         : undefined;
-      const adminPhone = admin.phone
-        ? normalizeRwandaPhone(admin.phone) ?? undefined
-        : undefined;
+      const adminPhone = normalizeRwandaPhone(admin.phone);
+      if (!adminPhone) {
+        setError("Your phone on the previous step is invalid. Go back and fix it.");
+        setLoading(false);
+        return;
+      }
 
       const registrationUpload = await uploadCompanyDocumentFile(registrationFile);
       const documents: Array<{
@@ -117,11 +122,11 @@ export default function OnboardingCompanyPage() {
         });
       }
 
-      const auth = await registerCompanyRequest({
+      const result = await registerCompanyRequest({
         company: {
-          name: form.name.trim(),
+          name: form.name.trim() || admin.companyName,
           phone: companyPhone,
-          email: form.email.trim() || undefined,
+          email: form.email.trim() || admin.email,
           address: form.address.trim() || undefined,
           registrationNumber: form.registrationNumber.trim(),
           currency: form.currency,
@@ -130,39 +135,18 @@ export default function OnboardingCompanyPage() {
         admin: {
           firstName: admin.firstName,
           lastName: admin.lastName,
-          email: admin.email || undefined,
+          email: admin.email,
           phone: adminPhone,
-          password: admin.password,
         },
         documents,
       });
 
-      persistAuth(auth);
-      const me = await fetchMe();
-      const membership = pickMembership(me.memberships);
-      if (!membership) {
-        throw new Error("Company created but no membership returned.");
-      }
-      persistAuth(auth, membership.companyId);
-      dispatch(
-        setSession({
-          userId: me.user.id,
-          userName: displayName(me.user),
-          userEmail: me.user.email ?? admin.email,
-          avatarInitials: initialsOf(me.user),
-          role: membership.role,
-          companyId: membership.companyId,
-          companyName: membership.companyName,
-          companyInitials: companyInitials(membership.companyName),
-          companyStatus: membership.companyStatus ?? "PENDING_REVIEW",
-          companyType: membership.companyType ?? "CLIENT",
-          operatorCompanyId: me.operatorCompanyId ?? null,
-          membershipId: membership.id,
-        }),
-      );
-
       clearAdminDraft();
-      router.push("/onboarding/pending");
+      const params = new URLSearchParams({
+        company: result.companyName,
+        email: result.email ?? admin.email,
+      });
+      router.push(`/register/success?${params.toString()}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
@@ -177,7 +161,7 @@ export default function OnboardingCompanyPage() {
           Company details
         </h1>
         <p className="mt-1 text-sm text-text-secondary">
-          Join the Kampere Motari waitlist. Upload supporting documents so Super Admin can validate and approve your company.
+          Upload supporting documents so Super Admin can validate and approve your company. You will set a password after approval.
         </p>
       </div>
 
@@ -203,7 +187,6 @@ export default function OnboardingCompanyPage() {
               value={form.phone}
               onChange={(e) => update("phone", e.target.value)}
               placeholder="+250 788 000 000"
-              required
             />
           </Field>
           <Field label="Ops email">
@@ -211,7 +194,7 @@ export default function OnboardingCompanyPage() {
               type="email"
               value={form.email}
               onChange={(e) => update("email", e.target.value)}
-              required
+              placeholder="ops@company.rw"
             />
           </Field>
         </div>
@@ -219,32 +202,8 @@ export default function OnboardingCompanyPage() {
           <Input
             value={form.address}
             onChange={(e) => update("address", e.target.value)}
-            required
+            placeholder="Kigali, Rwanda"
           />
-        </Field>
-        <Field
-          label="Business registration document"
-          hint="PDF, image, DOC, or DOCX · max 10 MB"
-        >
-          <Input
-            type="file"
-            accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,application/pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            onChange={(e) => setRegistrationFile(e.target.files?.[0] ?? null)}
-            required
-          />
-          {registrationFile ? (
-            <p className="text-xs text-text-muted mt-1">{registrationFile.name}</p>
-          ) : null}
-        </Field>
-        <Field label="Director ID document (optional)" hint="PDF, image, DOC, or DOCX · max 10 MB">
-          <Input
-            type="file"
-            accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,application/pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            onChange={(e) => setDirectorIdFile(e.target.files?.[0] ?? null)}
-          />
-          {directorIdFile ? (
-            <p className="text-xs text-text-muted mt-1">{directorIdFile.name}</p>
-          ) : null}
         </Field>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Currency">
@@ -253,6 +212,7 @@ export default function OnboardingCompanyPage() {
               onChange={(e) => update("currency", e.target.value)}
             >
               <option value="RWF">RWF</option>
+              <option value="USD">USD</option>
             </Select>
           </Field>
           <Field label="Timezone">
@@ -264,23 +224,36 @@ export default function OnboardingCompanyPage() {
             </Select>
           </Field>
         </div>
+        <Field label="Business registration document" hint="PDF, image, DOC, or DOCX">
+          <Input
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,application/pdf,image/*,.docx"
+            onChange={(e) => setRegistrationFile(e.target.files?.[0] ?? null)}
+            required
+          />
+        </Field>
+        <Field label="Director / admin ID (optional)">
+          <Input
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,application/pdf,image/*,.docx"
+            onChange={(e) => setDirectorIdFile(e.target.files?.[0] ?? null)}
+          />
+        </Field>
 
         {error ? (
-          <p className="text-sm text-danger bg-danger-soft rounded-[8px] px-3 py-2">
-            {error}
-          </p>
+          <p className="text-sm text-danger bg-danger-soft rounded-[8px] px-3 py-2">{error}</p>
         ) : null}
 
-        <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2 sm:justify-end">
+        <div className="flex flex-wrap gap-2 pt-2">
+          <Button type="submit" disabled={loading}>
+            {loading ? "Submitting…" : "Submit waitlist application"}
+          </Button>
           <Button
             type="button"
             variant="secondary"
             onClick={() => router.push("/register")}
           >
             Back
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Uploading & submitting…" : "Submit for approval"}
           </Button>
         </div>
       </form>

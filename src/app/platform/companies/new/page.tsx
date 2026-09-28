@@ -41,7 +41,7 @@ export default function PlatformRegisterCompanyPage() {
       return;
     }
     if (!isValidEmail(form.adminEmail)) {
-      setError("Enter a valid admin email.");
+      setError("Enter a valid supervisor email.");
       return;
     }
     if (form.phone.trim() && !isValidRwandaPhone(form.phone)) {
@@ -49,7 +49,7 @@ export default function PlatformRegisterCompanyPage() {
       return;
     }
     if (form.adminPhone.trim() && !isValidRwandaPhone(form.adminPhone)) {
-      setError("Admin phone must be a valid Rwanda number.");
+      setError("Supervisor phone must be a valid Rwanda number.");
       return;
     }
 
@@ -90,7 +90,7 @@ export default function PlatformRegisterCompanyPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <PageHeader
         title="Register company"
-        description="Create a client company under Kampere Motari and invite its first company admin."
+        description="Create a client company under Kampere Motari and invite its first company supervisor."
       />
 
       {error && (
@@ -100,7 +100,7 @@ export default function PlatformRegisterCompanyPage() {
       )}
       {tempPassword && (
         <Card padding="md" className="border-warning/30 bg-warning-soft text-sm text-warning">
-          Temporary admin password: <strong>{tempPassword}</strong>
+          Temporary supervisor password: <strong>{tempPassword}</strong>
         </Card>
       )}
 
@@ -132,7 +132,7 @@ export default function PlatformRegisterCompanyPage() {
             <Input value={form.address} onChange={(e) => update("address", e.target.value)} />
           </Field>
 
-          <h2 className="pt-2 text-sm font-semibold text-text">First company admin</h2>
+          <h2 className="pt-2 text-sm font-semibold text-text">First company supervisor</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="First name">
               <Input

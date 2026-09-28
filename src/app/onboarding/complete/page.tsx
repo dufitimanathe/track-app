@@ -21,8 +21,8 @@ export default function OnboardingCompletePage() {
       </h1>
       <p className="mt-2 text-sm text-text-secondary max-w-md mx-auto">
         {isAuthenticated
-          ? "Your company is connected to the API. Open the admin console to manage fleet, riders, and trips."
-          : "Sign in with your new admin account to open the live console."}
+          ? "Your company is connected. Open your supervisor workspace to manage employees, trips, and invoices."
+          : "Sign in with your company supervisor account to open the workspace."}
       </p>
       <div className="mt-6 flex flex-col sm:flex-row gap-2 justify-center">
         <Button

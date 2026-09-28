@@ -309,12 +309,12 @@ export function mapInvoice(dto: InvoiceDto): Invoice {
     trips: dto.lines?.length ?? 0,
     amount: Number(dto.total),
     issuedDate: formatWhen(dto.issuedAt ?? dto.periodStart),
-    dueDate: formatWhen(dto.periodEnd),
+    dueDate: formatWhen(dto.dueAt ?? dto.periodEnd),
     status: s.includes('PAID')
       ? 'paid'
       : s.includes('OVER')
         ? 'overdue'
-        : s.includes('PEND')
+        : s.includes('PAYMENT_SUBMITTED') || s.includes('ISSUED')
           ? 'pending'
           : 'draft',
   };

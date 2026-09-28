@@ -9,21 +9,25 @@ import { mapRiderMeMotorcycle } from "@/lib/api/mappers";
 import { fetchRiderMe } from "@/lib/api/resources";
 import { clearSession as clearStorage, getRefreshToken } from "@/lib/api/client";
 import { logoutRequest } from "@/lib/api/auth";
+import { uploadAvatarFile } from "@/lib/api/uploads";
+import { resolveUploadUrl } from "@/lib/config";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { clearSession } from "@/store/slices/auth-slice";
+import { clearSession, setAvatarUrl } from "@/store/slices/auth-slice";
 import type { Motorcycle } from "@/types";
-import { Bike, LogOut } from "lucide-react";
+import { Bike, Camera, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function RiderProfilePage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { userName, userEmail, avatarInitials, companyName, companyId } =
+  const fileRef = useRef<HTMLInputElement>(null);
+  const { userName, userEmail, avatarInitials, avatarUrl, companyName, companyId } =
     useAppSelector((s) => s.auth);
   const [moto, setMoto] = useState<Motorcycle | null>(null);
   const [phone, setPhone] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const load = useCallback(async () => {
     if (!companyId) return;
@@ -40,6 +44,20 @@ export default function RiderProfilePage() {
     void load();
   }, [load]);
 
+  async function onPickAvatar(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const updated = await uploadAvatarFile(file);
+      dispatch(setAvatarUrl(updated.avatarUrl ?? null));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload photo");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <PageHeader title="Profile" description="Account and motorcycle assignment." />
@@ -50,13 +68,46 @@ export default function RiderProfilePage() {
 
       <Card padding="lg">
         <div className="flex items-center gap-4">
-          <Avatar initials={avatarInitials || "R"} size="lg" />
+          <div className="relative">
+            <Avatar
+              initials={avatarInitials || "R"}
+              src={resolveUploadUrl(avatarUrl) || null}
+              size="lg"
+            />
+            <button
+              type="button"
+              className="absolute -bottom-1 -right-1 rounded-full border border-border bg-surface p-1.5 text-primary shadow-sm hover:bg-surface-muted"
+              aria-label="Change profile photo"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+            >
+              <Camera className="size-3.5" />
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                void onPickAvatar(e.target.files?.[0] ?? null);
+                e.target.value = "";
+              }}
+            />
+          </div>
           <div>
             <p className="text-lg font-semibold text-text">{userName}</p>
             <p className="text-sm text-text-secondary">{userEmail}</p>
             <div className="mt-2">
               <StatusBadge status="on_trip" label="Rider" />
             </div>
+            <button
+              type="button"
+              className="mt-2 text-xs font-medium text-primary hover:underline"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+            >
+              {uploading ? "Uploading…" : "Change profile photo"}
+            </button>
           </div>
         </div>
 

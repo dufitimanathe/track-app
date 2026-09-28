@@ -56,6 +56,7 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
             userName: displayName(me.user),
             userEmail: me.user.email ?? '',
             avatarInitials: initialsOf(me.user),
+            avatarUrl: me.user.avatarUrl ?? null,
             role: membership.role,
             companyId: membership.companyId,
             companyName: membership.companyName,
@@ -104,9 +105,9 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
     }
 
     if (
-      role === 'COMPANY_ADMIN' &&
+      (role === 'SUPERVISOR' || role === 'COMPANY_ADMIN') &&
       (companyStatus === 'PENDING_REVIEW' || companyStatus === 'REJECTED') &&
-      pathname.startsWith('/admin')
+      (pathname.startsWith('/admin') || pathname.startsWith('/supervisor'))
     ) {
       router.replace('/onboarding/pending');
       return;

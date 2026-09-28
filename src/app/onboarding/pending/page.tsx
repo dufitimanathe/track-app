@@ -25,7 +25,7 @@ export default function PendingApprovalPage() {
       if (membership?.companyStatus) {
         setStatus(membership.companyStatus);
         if (membership.companyStatus === "ACTIVE") {
-          window.location.href = "/admin";
+          window.location.href = "/supervisor";
         }
       }
     } finally {

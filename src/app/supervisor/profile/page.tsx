@@ -7,12 +7,15 @@ import { Avatar } from "@/components/ui/overlay";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { clearSession as clearStorage, getRefreshToken } from "@/lib/api/client";
 import { logoutRequest } from "@/lib/api/auth";
+import { uploadAvatarFile } from "@/lib/api/uploads";
+import { resolveUploadUrl } from "@/lib/config";
 import { roleLabel } from "@/lib/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { clearSession } from "@/store/slices/auth-slice";
+import { clearSession, setAvatarUrl } from "@/store/slices/auth-slice";
 import type { UserRole } from "@/types";
-import { LogOut, Shield } from "lucide-react";
+import { Camera, LogOut, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 
 const VIEWING_BY_ROLE: Partial<Record<UserRole, string[]>> = {
   SUPERVISOR: [
@@ -35,18 +38,37 @@ const VIEWING_BY_ROLE: Partial<Record<UserRole, string[]>> = {
 export default function OpsProfilePage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
   const {
     userName,
     userEmail,
     avatarInitials,
+    avatarUrl,
     companyName,
     role,
     membershipId,
   } = useAppSelector((s) => s.auth);
 
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const viewing = VIEWING_BY_ROLE[role] ?? [`${roleLabel(role)} access`];
   const title =
     role === "ACCOUNTANT" ? "Accountant profile" : role === "SUPERVISOR" ? "Supervisor profile" : "Profile";
+
+  async function onPickAvatar(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const updated = await uploadAvatarFile(file);
+      dispatch(setAvatarUrl(updated.avatarUrl ?? null));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Failed to upload photo");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <div className="max-w-[640px] mx-auto space-y-4">
@@ -54,7 +76,32 @@ export default function OpsProfilePage() {
 
       <Card padding="lg">
         <div className="flex items-center gap-4">
-          <Avatar initials={avatarInitials || "OP"} size="lg" />
+          <div className="relative">
+            <Avatar
+              initials={avatarInitials || "OP"}
+              src={resolveUploadUrl(avatarUrl) || null}
+              size="lg"
+            />
+            <button
+              type="button"
+              className="absolute -bottom-1 -right-1 rounded-full border border-border bg-surface p-1.5 text-primary shadow-sm hover:bg-surface-muted"
+              aria-label="Change profile photo"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+            >
+              <Camera className="size-3.5" />
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                void onPickAvatar(e.target.files?.[0] ?? null);
+                e.target.value = "";
+              }}
+            />
+          </div>
           <div>
             <p className="text-lg font-semibold text-text">{userName || title}</p>
             <p className="text-sm text-text-secondary">{userEmail || "—"}</p>
@@ -64,6 +111,15 @@ export default function OpsProfilePage() {
                 {roleLabel(role)}
               </span>
             </div>
+            <button
+              type="button"
+              className="mt-2 text-xs font-medium text-primary hover:underline"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+            >
+              {uploading ? "Uploading…" : "Change profile photo"}
+            </button>
+            {uploadError ? <p className="mt-1 text-xs text-danger">{uploadError}</p> : null}
           </div>
         </div>
 

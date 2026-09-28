@@ -199,6 +199,12 @@ export interface InvoiceDto {
   total: string;
   currency: string;
   issuedAt?: string | null;
+  dueAt?: string | null;
+  paidAt?: string | null;
+  paymentProofUrl?: string | null;
+  paymentProofUploadedAt?: string | null;
+  paymentSubmittedAt?: string | null;
+  paymentNote?: string | null;
   lines?: InvoiceLineDto[];
 }
 
@@ -619,6 +625,48 @@ export function generateInvoice(
     method: 'POST',
     body: JSON.stringify(body),
   });
+}
+
+export function issueInvoice(companyId: string, invoiceId: string) {
+  return apiFetch<InvoiceDto>(`/companies/${companyId}/invoices/${invoiceId}/issue`, {
+    method: 'POST',
+    body: '{}',
+  });
+}
+
+export function submitInvoicePaymentProof(
+  companyId: string,
+  invoiceId: string,
+  body: { paymentProofUrl: string; note?: string },
+) {
+  return apiFetch<InvoiceDto>(
+    `/companies/${companyId}/invoices/${invoiceId}/payment-proof`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+  );
+}
+
+export function approveInvoicePayment(companyId: string, invoiceId: string) {
+  return apiFetch<InvoiceDto>(
+    `/companies/${companyId}/invoices/${invoiceId}/approve-payment`,
+    { method: 'POST', body: '{}' },
+  );
+}
+
+export function rejectInvoicePayment(
+  companyId: string,
+  invoiceId: string,
+  note?: string,
+) {
+  return apiFetch<InvoiceDto>(
+    `/companies/${companyId}/invoices/${invoiceId}/reject-payment`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    },
+  );
 }
 
 export function fetchCompany(companyId: string) {

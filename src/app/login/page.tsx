@@ -56,6 +56,7 @@ function LoginForm() {
           userName: displayName(me.user),
           userEmail: me.user.email ?? email,
           avatarInitials: initialsOf(me.user),
+          avatarUrl: me.user.avatarUrl ?? null,
           role: membership.role,
           companyId: membership.companyId,
           companyName: membership.companyName,

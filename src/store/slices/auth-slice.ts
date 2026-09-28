@@ -10,6 +10,7 @@ export interface AuthState {
   userName: string;
   userEmail: string;
   avatarInitials: string;
+  avatarUrl: string | null;
   companyId: string;
   companyName: string;
   companyInitials: string;
@@ -22,11 +23,12 @@ export interface AuthState {
 const initialState: AuthState = {
   hydrated: false,
   isAuthenticated: false,
-  role: 'COMPANY_ADMIN',
+  role: 'PLATFORM_ADMIN',
   userId: '',
   userName: '',
   userEmail: '',
   avatarInitials: '',
+  avatarUrl: null,
   companyId: '',
   companyName: '',
   companyInitials: '',
@@ -50,6 +52,7 @@ const authSlice = createSlice({
         userName: string;
         userEmail: string;
         avatarInitials: string;
+        avatarUrl?: string | null;
         role: UserRole;
         companyId: string;
         companyName: string;
@@ -64,10 +67,14 @@ const authSlice = createSlice({
       state.hydrated = true;
       Object.assign(state, {
         ...action.payload,
+        avatarUrl: action.payload.avatarUrl ?? null,
         companyStatus: action.payload.companyStatus ?? 'ACTIVE',
         companyType: action.payload.companyType ?? 'CLIENT',
         operatorCompanyId: action.payload.operatorCompanyId ?? null,
       });
+    },
+    setAvatarUrl(state, action: PayloadAction<string | null>) {
+      state.avatarUrl = action.payload;
     },
     clearSession(state) {
       Object.assign(state, { ...initialState, hydrated: true });
@@ -83,5 +90,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { setHydrated, setSession, clearSession, setCompanyProfile } = authSlice.actions;
+export const { setHydrated, setSession, clearSession, setCompanyProfile, setAvatarUrl } =
+  authSlice.actions;
 export default authSlice.reducer;

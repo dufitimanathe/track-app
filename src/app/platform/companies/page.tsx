@@ -63,7 +63,7 @@ function CompaniesContent() {
     <div className="space-y-6">
       <PageHeader
         title="Companies"
-        description="Review registrations, validate documents, and manage company admins."
+        description="Review registrations, validate documents, and manage company supervisors."
         actions={
           <Link
             href="/platform/companies/new"
@@ -141,7 +141,7 @@ function CompaniesContent() {
                     </p>
                   </div>
                   <div className="text-sm text-text-secondary">
-                    {company.adminCount ?? 0} admin(s) · {company.documentCount ?? 0} doc(s)
+                    {company.adminCount ?? 0} supervisor(s) · {company.documentCount ?? 0} doc(s)
                     {(company.pendingDocumentCount ?? 0) > 0
                       ? ` · ${company.pendingDocumentCount} pending`
                       : ""}

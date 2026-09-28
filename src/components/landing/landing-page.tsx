@@ -28,8 +28,14 @@ const questions = [
 function Brand() {
   return (
     <a href="#home" className={styles.brand} aria-label="Kampere Motari Ltd home">
-      <span className={styles.brandMark} aria-hidden="true">k<span>.</span></span>
-      <span>kampere<span className={styles.brandSecond}>motari ltd</span></span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo.jpeg"
+        alt="Kampere Motari Ltd"
+        className={styles.brandLogo}
+        width={160}
+        height={52}
+      />
     </a>
   );
 }
@@ -169,7 +175,11 @@ export function LandingPage({ email, whatsapp }: { email?: string; whatsapp?: st
               <p className={styles.employeeNote}>New here? Ask your company’s transport coordinator to register your number and share the booking contact.</p>
             </div>
             <div className={styles.messageDemo}>
-              <div className={styles.chatHeader}><span className={styles.chatAvatar}>km.</span><div><strong>Your workday, on the move</strong><span>A simple booking conversation</span></div></div>
+              <div className={styles.chatHeader}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.jpeg" alt="" className={styles.chatAvatar} width={35} height={35} />
+                <div><strong>Your workday, on the move</strong><span>A simple booking conversation</span></div>
+              </div>
               <div className={styles.chatBody}><span className={styles.chatDate}>EXAMPLE CONVERSATION</span><div className={styles.sentMessage}>From Kimironko to Kacyiru at 3pm<small>You</small></div><div className={styles.receivedMessage}>Let’s check your journey.<dl><div><dt>Pickup</dt><dd>Kimironko</dd></div><div><dt>Destination</dt><dd>Kacyiru</dd></div><div><dt>Time</dt><dd>3:00 PM</dd></div></dl><span className={styles.confirmPreview}>Confirm trip details</span></div><div className={styles.chatStatus}><span /> Next: supervisor approval</div></div>
               <div className={styles.copyArea}><button type="button" onClick={() => void copyMessage()} className={styles.copyButton}>{copied ? "Example copied" : "Copy example message"}<ArrowUpRight size={15} aria-hidden="true" /></button><p aria-live="polite">{copyError ? "Select and copy the example above, then edit it for your journey." : copied ? "Edit the places and time before sending to your company’s booking number." : "Use your own places and time when you book."}</p></div>
             </div>

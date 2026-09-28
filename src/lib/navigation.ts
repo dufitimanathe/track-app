@@ -50,17 +50,16 @@ export const adminNav: NavItem[] = [
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-/** CLIENT company admin — no rider/fleet/live-ops; billing/invoices are read-oriented. */
+/** @deprecated CLIENT companies use supervisor only — alias kept for older imports. */
 export const clientAdminNav: NavItem[] = [
-  { label: "Overview", href: "/admin", icon: LayoutDashboard },
-  { label: "Requests", href: "/admin/requests", icon: ClipboardList, badge: "pending" },
-  { label: "Trips", href: "/admin/trips", icon: Activity },
-  { label: "Employees", href: "/admin/employees", icon: Building2 },
-  { label: "Supervisors", href: "/admin/supervisors", icon: Shield },
-  { label: "Billing", href: "/admin/billing", icon: Wallet },
-  { label: "Invoices", href: "/admin/invoices", icon: Receipt },
-  { label: "Notifications", href: "/admin/notifications", icon: Bell },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
+  { label: "Overview", href: "/supervisor", icon: LayoutDashboard },
+  { label: "Requests", href: "/supervisor/requests", icon: ClipboardList, badge: "pending" },
+  { label: "Trips", href: "/supervisor/trips", icon: Activity },
+  { label: "Employees", href: "/supervisor/employees", icon: Building2 },
+  { label: "Billing", href: "/supervisor/billing", icon: Wallet },
+  { label: "Invoices", href: "/supervisor/invoices", icon: Receipt },
+  { label: "Notifications", href: "/supervisor/notifications", icon: Bell },
+  { label: "Profile", href: "/supervisor/profile", icon: UserCircle },
 ];
 
 export const supervisorNav: NavItem[] = [
@@ -75,16 +74,7 @@ export const supervisorNav: NavItem[] = [
   { label: "Profile", href: "/supervisor/profile", icon: UserCircle },
 ];
 
-export const clientSupervisorNav: NavItem[] = [
-  { label: "Overview", href: "/supervisor", icon: LayoutDashboard },
-  { label: "Requests", href: "/supervisor/requests", icon: ClipboardList, badge: "pending" },
-  { label: "Trips", href: "/supervisor/trips", icon: Activity },
-  { label: "Employees", href: "/supervisor/employees", icon: Building2 },
-  { label: "Billing", href: "/supervisor/billing", icon: Wallet },
-  { label: "Invoices", href: "/supervisor/invoices", icon: Receipt },
-  { label: "Notifications", href: "/supervisor/notifications", icon: Bell },
-  { label: "Profile", href: "/supervisor/profile", icon: UserCircle },
-];
+export const clientSupervisorNav: NavItem[] = clientAdminNav;
 
 /** Accountant: money, trips, requests — no fleet/rider/user admin. */
 export const accountantNav: NavItem[] = [
@@ -142,10 +132,7 @@ export function navForRole(role: UserRole, companyType: CompanyType = "OPERATOR"
   if (role === "PLATFORM_ADMIN") return platformNav;
   if (role === "ACCOUNTANT") return accountantNav;
   if (role === "RIDER") return riderNav;
-  if (companyType === "CLIENT") {
-    if (role === "SUPERVISOR") return clientSupervisorNav;
-    return clientAdminNav;
-  }
+  if (companyType === "CLIENT") return clientSupervisorNav;
   if (role === "SUPERVISOR") return supervisorNav;
   return adminNav;
 }
@@ -172,7 +159,7 @@ export function destinationForMembership(membership: {
 }): string {
   if (membership.role === "PLATFORM_ADMIN") return "/platform";
   if (
-    membership.role === "COMPANY_ADMIN" &&
+    (membership.role === "SUPERVISOR" || membership.role === "COMPANY_ADMIN") &&
     (membership.companyStatus === "PENDING_REVIEW" ||
       membership.companyStatus === "REJECTED")
   ) {
@@ -191,7 +178,7 @@ export function opsBasePath(role: UserRole): "/admin" | "/supervisor" | "/accoun
 export function roleLabel(role: UserRole): string {
   switch (role) {
     case "COMPANY_ADMIN":
-      return "Company Admin";
+      return "Company Supervisor";
     case "SUPERVISOR":
       return "Supervisor";
     case "ACCOUNTANT":
